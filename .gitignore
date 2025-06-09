@@ -1,0 +1,41 @@
+# Build system folders
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+/.ninja*
+*.ninja
+
+# Compiled object files
+*.obj
+*.o
+*.so
+*.dll
+*.exe
+*.modmap
+*.ddi
+*.d
+*.a
+
+# CMake intermediate files
+*.bin
+*.json
+*.log
+*.sym
+
+# IDE files
+.idea/
+
+# Dependency builds
+/dependencies/SDL_*/
+/dependencies/freetyped.dll
+/dependencies/*.dll
+/dependencies/*.a
+
+# Optional
+*.user
+*.db
+*.suo
+*.vcxproj.*
+*.DS_Store
