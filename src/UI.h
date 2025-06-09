@@ -14,6 +14,7 @@ class UI {
     static int CurrentLayer;
     static int UIAction;
     static int Scrolling;
+    static bool ControlsPressed[7];
     static const char* CurrentMenu;
     static void Init();
     static SDL_Texture* UITexture, * FullEscapeTexture, * NoButtonEscapeTexture;

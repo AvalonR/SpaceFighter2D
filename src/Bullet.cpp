@@ -31,7 +31,7 @@ Bullet::Bullet()
 Bullet::~Bullet() = default;
 std::vector<std::pair<Bullet, int>> Bullet::ScheduledBulletList;
 
-void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS) {
+void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage) {
         float spawnDistance = 100.0f;  
         Bullet bullet;
         bullet.dstR->x = entityCenterX + cos(angleRad) * spawnDistance - bullet.dstR->w / 2;
@@ -51,7 +51,7 @@ void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY, doubl
         else
         {
             bullet.owner = 0;
-            bullet.damage = 0.2f + Player::PlayerUpgrades.damagePerBullet;
+            bullet.damage = damage + Player::PlayerUpgrades.damagePerBullet;
             if (delayMS > 0) {
                 ScheduledBulletList.emplace_back(std::pair<Bullet, int>(bullet, delayMS));
             }
@@ -76,7 +76,7 @@ void Bullet::spawnBulletPlayer()
         for (int i = 0; i < bulletcount; i++) {
             double angleRadians = ((Setup::EntityList[0].rotation + 90) * (M_PI / 180.0f)) ;
             float offset = spread * (i - (bulletcount - 1) / 2.0f);
-            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad + offset, angleRadians + offset, 0);
+            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad + offset, angleRadians + offset, 0, (0.2f / (bulletcount)));
         }
     }
     if (Player::PlayerUpgrades.firemodes[1]) { //Radial fire
@@ -84,7 +84,7 @@ void Bullet::spawnBulletPlayer()
         
         for (int i = 0; i < bulletcount; i++) {
             float angle = (2 * M_PI / bulletcount) * i;
-            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad, angle, 10 * i);
+            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad, angle, 10 * i, (0.2f / (bulletcount)));
         }
     }
     if (Player::PlayerUpgrades.firemodes[2]) { //Parallel fire
@@ -96,7 +96,7 @@ void Bullet::spawnBulletPlayer()
             float offsetX = cos(angleRad + M_PI_2) * sideOffset;
             float offsetY = sin(angleRad + M_PI_2) * sideOffset;
             double angleRadians = (Setup::EntityList[0].rotation + 90) * (M_PI / 180.0f);
-            SpawnSpecificBullet(entityCenterX + offsetX, entityCenterY + offsetY, angleRad, angleRadians, 0); 
+            SpawnSpecificBullet(entityCenterX + offsetX, entityCenterY + offsetY, angleRad, angleRadians, 0, (0.2f / (bulletcount))); 
         }
     }
     if (!Player::PlayerUpgrades.firemodes[0] && !Player::PlayerUpgrades.firemodes[1] && !Player::PlayerUpgrades.firemodes[2]) {
@@ -104,7 +104,7 @@ void Bullet::spawnBulletPlayer()
 
         for (int i = 0; i < bulletcount; i++) {
             double angleRadians = (Setup::EntityList[0].rotation + 90) * (M_PI / 180.0f);
-            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad, angleRadians, 10 * i);
+            SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad, angleRadians, 10 * i, (0.2f / (bulletcount)));
         }
     }
 }

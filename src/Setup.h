@@ -39,6 +39,7 @@ public:
     static int TargetScore;
     static int CurrentLevel;
     static float speed;
+    static float Difficulty;
     static std::string basePath;
     static std::vector<EntityStats> EntityList;
     static std::vector<int> ScoreHistory;

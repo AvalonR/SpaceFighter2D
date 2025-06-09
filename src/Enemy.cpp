@@ -182,6 +182,7 @@ void Enemy::EnemyAI()
                 a.w = a.w * 2;
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 2, a);
                 Setup::TargetScore += 20;
+                Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.15f, 1.0f);
                 Player::enemies_killed++;
                 Loot::spawnCoins(coinrec, 10);
@@ -192,6 +193,7 @@ void Enemy::EnemyAI()
                 a.h = (a.h + 20) * 1.2;
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a);
                 Setup::TargetScore += 25;
+                Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.1f, 1.0f);
                 Player::enemies_killed++;
                 Loot::spawnCoins(coinrec, 15);
@@ -214,6 +216,7 @@ void Enemy::EnemyAI()
                     }
                 }
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 3, a);
+                Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
                 Setup::TargetScore += 250;
                 Player::enemies_killed++;
@@ -388,6 +391,7 @@ void Enemy::EnemyAI()
             {
                 SDL_FRect shipanim = {Entity.dest.x - Entity.dest.w / 2, Entity.dest.y - Entity.dest.h / 2, 256, 256};
                 TextureManager::animationsVec.emplace_back(0, 20, 800, 180, 6, shipanim);
+                Sound::PlaySound(7);
             }
             if (Entity.shooting_delay <= 0)
             {
@@ -397,6 +401,7 @@ void Enemy::EnemyAI()
                 TextureManager::animationsVec.emplace_back(0, 1, 450, 0, 5, a);
                 a.y += 256;
                 TextureManager::animationsVec.emplace_back(0, 1, 450, 0, 5, a);
+                Sound::PlaySound(8);
                 Entity.shooting_delay = 1200;
             }
             for (int t = 0; t < TextureManager::animationsVec.size(); t++)

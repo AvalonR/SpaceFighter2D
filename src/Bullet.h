@@ -25,7 +25,7 @@ public:
     static std::vector<std::pair<Bullet, int>> ScheduledBulletList;
     static void spawnBulletPlayer();
     static void spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation);
-    static void SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS);
+    static void SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage);
     static void updateBullets();
 };
 

@@ -139,6 +139,7 @@ int healingcooldown = 144;
 void Player::playerInput()
 {
     if (PlayerUpgrades.ExperienceP == 1.0f) {
+        Sound::PlaySound(10);
         UI::UIAction = 5;
         UI::CurrentLayer = 4;
         Setup::is_Paused = true;
@@ -211,12 +212,16 @@ void Player::playerInput()
         }
         if (Setup::event.type == SDL_EVENT_KEY_UP)
         {
+                for(int i = 0; i < 7; i++) {
+                UI::ControlsPressed[i] = false;
+                }
             keyState[Setup::event.key.key] = false;
         }
         Setup::EntityList[0].velocity.x = 0.0f;
         Setup::EntityList[0].velocity.y = 0.0f;
         if (keyState[SDLK_E])
         {
+            UI::ControlsPressed[2] = true;
             if (Setup::is_Paused != true)
             {
                 if (Setup::EntityList[0].shooting_delay <= 0 && Setup::EntityList[0].BC >= 0)
@@ -230,6 +235,7 @@ void Player::playerInput()
         }
         if (keyState[SDLK_Q])
         {
+            UI::ControlsPressed[0] = true;
             if (Setup::is_Paused != true)
             {
                 if (Setup::EntityList[0].BC < 1.0f && !isReloading)
@@ -237,6 +243,22 @@ void Player::playerInput()
                     isReloading = true;
                 }
             }
+        }
+        if (keyState[SDLK_W])
+        {
+            UI::ControlsPressed[1] = true;
+        }
+        if (keyState[SDLK_S])
+        {
+            UI::ControlsPressed[4] = true;
+        }
+        if (keyState[SDLK_A])
+        {
+            UI::ControlsPressed[3] = true;
+        }
+        if (keyState[SDLK_D])
+        {
+            UI::ControlsPressed[5] = true;
         }
         if (Setup::event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
         {
@@ -263,10 +285,10 @@ void Player::playerInput()
         if (Setup::is_Paused) return;
         Setup::EntityList[0].rotation = angleDegrees;
 
-        if (keyState[SDLK_W]) Setup::EntityList[0].velocity.y -= 1.0f; // Move up
-        if (keyState[SDLK_S]) Setup::EntityList[0].velocity.y += 1.0f; // Move down
-        if (keyState[SDLK_A]) Setup::EntityList[0].velocity.x -= 1.0f; // Move left
-        if (keyState[SDLK_D]) Setup::EntityList[0].velocity.x += 1.0f; // Move right
+        if (keyState[SDLK_W]) { Setup::EntityList[0].velocity.y -= 1.0f; UI::ControlsPressed[1] = true;}// Move up
+        if (keyState[SDLK_S]) { Setup::EntityList[0].velocity.y += 1.0f; UI::ControlsPressed[4] = true;}// Move down
+        if (keyState[SDLK_A]) { Setup::EntityList[0].velocity.x -= 1.0f; UI::ControlsPressed[3] = true;}// Move left
+        if (keyState[SDLK_D]) { Setup::EntityList[0].velocity.x += 1.0f; UI::ControlsPressed[5] = true;}// Move right
         Setup::EntityList[0].x = std::clamp(Setup::EntityList[0].x, 0.0f,
                                             Setup::WindowWidth - Setup::EntityList[0].dest.w);
         Setup::EntityList[0].y = std::clamp(Setup::EntityList[0].y, 0.0f,

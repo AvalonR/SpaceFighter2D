@@ -37,6 +37,7 @@ int Setup::WindowHeight = 1080;
 SDL_Renderer* Setup::renderer = nullptr;
 Vector Setup::mouseCoordin = {};
 float Setup::speed = 5.;
+float Setup::Difficulty = 1.;
 std::vector<EntityStats> Setup::EntityList;
 
 std::string Setup::basePath;
@@ -141,6 +142,27 @@ IMG_Animation* enginesDreadnought = TextureManager::LoadAnimation("enginesDreadn
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_36.png")); 
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_27.png")); 
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_34.png")); //element -> 23
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_e.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_e_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_q.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_q_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_escape.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_escape_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_w.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_w_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_s.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_s_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_a.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_a_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_d.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_d_outline.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/mouse_move.png")); //element -> 38
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_all.png"));
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_all.png"));
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_down.png"));
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_up.png"));
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_right.png"));
+    //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_left.png"));
     //Loading maps
     if (Map::MapTextureNames.empty()) {
         Map::MapTextureNames.emplace_back("Space_Background.png");
@@ -157,8 +179,6 @@ IMG_Animation* enginesDreadnought = TextureManager::LoadAnimation("enginesDreadn
     ScoreHistory.emplace_back(300);
     ScoreHistory.emplace_back(200);
     ScoreHistory.emplace_back(100);
-    Player::PlayerUpgrades.extraBulletsPerShot = 14;
-    Player::PlayerUpgrades.firemodes[0] = true;
 }
 void Setup::gameLoop()
 {
@@ -203,6 +223,7 @@ void Setup::restart()
         Coins = 0;
         TargetCoins = 0;
         UI::CurrentLayer = 1;
+        Sound::PlaySound(11);
         Player::PlayerUpgrades = PlayerUpgradeStats{};
         Map::MapGeneration();
         CurrentLevel = 1;
@@ -224,11 +245,13 @@ void Setup::nextLevel()
     CurrentLevel++;
     if (CurrentLevel > 6) {
         Restart = true;
+        Sound::PlaySound(11);
         restart();
     }
     Map::NewMap(CurrentLevel);
     Mix_HaltChannel(-1);
     Enemy::RestartWaves();
+    Sound::PlaySound(11);
     UI::CurrentLayer = 1;
 }
 void Setup::update()

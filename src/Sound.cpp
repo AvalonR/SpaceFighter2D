@@ -31,6 +31,11 @@ void Sound::Init()
     LoadSound("buttonclick.wav");
     LoadSound("coin_drop2.wav");
     LoadSound("coin_recieved2.wav");
+    LoadSound("lasercharge_normalized.wav");
+    LoadSound("laserbeam_normalized.wav");
+    LoadSound("earnxp_normalized.wav");
+    LoadSound("levelup_normalized.wav");
+    LoadSound("message_normalized.wav");
     Mix_ReserveChannels(1);
     VolumeAdjustmentChannel[0] = 104;
     VolumeAdjustmentChannel[1] = 34;
@@ -65,11 +70,11 @@ void Sound::VolumeAdjustment() {
         int baseVolume = 0;
 
         // Pick the base volume level based on category
-        if (v.soundchosen == 4) {
+        if (v.soundchosen == 4 || v.soundchosen == 11 || v.soundchosen == 10 || v.soundchosen == 9) {
             baseVolume = VolumeAdjustmentChannel[1];
         } else if (v.soundchosen == 0 || v.soundchosen == 5 || v.soundchosen == 6) {
             baseVolume = VolumeAdjustmentChannel[2];
-        } else if (v.soundchosen == 1 || v.soundchosen == 2 || v.soundchosen == 3) {
+        } else if (v.soundchosen == 1 || v.soundchosen == 2 || v.soundchosen == 3 || v.soundchosen == 7 || v.soundchosen == 8 ) {
             baseVolume = VolumeAdjustmentChannel[3];
         }
 

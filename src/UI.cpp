@@ -26,6 +26,7 @@ std::multimap<int, const char*> ButtonLayout;
 int UI::CurrentLayer = 1;
 int buttonCooldown = 0;
 int UI::Scrolling = 0;
+bool UI::ControlsPressed[7];
 
 void UI::Init()
 {
@@ -73,6 +74,7 @@ void UI::Init()
     ButtonLayout.insert(std::pair<int, const char*>(4, "Thruster"));
     ButtonLayout.insert(std::pair<int, const char*>(5, "Back"));
 }
+int buttongoDown = 0;
 
 void UI::RenderUI()
 {
@@ -128,6 +130,50 @@ void UI::RenderUI()
             {
                 CurrentLayer = 1;
             }
+            SDL_FRect Buttons = {1600, 880, 64, 64};
+            if (ControlsPressed[0] ) {
+                TextureManager::DrawTextureNP(26, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(27, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1660, 880, 64, 64};
+            if (ControlsPressed[1]) {
+                TextureManager::DrawTextureNP(30, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(31, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1720, 880, 64, 64};
+            if (ControlsPressed[2]) {
+                TextureManager::DrawTextureNP(24, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(25, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1610, 940, 64, 64};
+            if (ControlsPressed[3]) {
+                TextureManager::DrawTextureNP(34, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(35, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1670, 940, 64, 64};
+            if (ControlsPressed[4]) {
+                TextureManager::DrawTextureNP(32, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(33, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1730, 940, 64, 64};
+            if (ControlsPressed[5]) {
+                TextureManager::DrawTextureNP(36, Setup::renderer, &Buttons, 0); 
+            }
+            else {
+                TextureManager::DrawTextureNP(37, Setup::renderer, &Buttons, 0); 
+            }
+            Buttons = {1810, 910, 64, 64};
+            TextureManager::DrawTextureNP(38, Setup::renderer, &Buttons, 0); 
         }
         if (std::strcmp(CurrentMenu, "Swarm_Mode") == 0)
         {

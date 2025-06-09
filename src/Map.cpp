@@ -102,7 +102,8 @@ void Map::MapGeneration() {
             std::vector<std::pair<int, int>> enemies;
             if (i < 2) {
                 if (j < 2) {
-                    enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
+                    //enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
+                    enemies.emplace_back(3, 1);
                     enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
                 } else {
                     enemies.emplace_back(3, 1);
