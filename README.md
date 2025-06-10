@@ -1,6 +1,6 @@
 # 🚀 AvalonR
 
-_AvalonR_ is a space combat game where your ship and crew fight through procedurally generated waves of enemies across dynamic maps in deep space. Upgrade your firepower, customize your loadout, and survive the relentless onslaught!
+This Project is a space combat game where your ship and crew fight through procedurally generated waves of enemies across dynamic maps in deep space. Upgrade your firepower, customize your loadout, and survive the relentless onslaught!
 
 ![Screenshot Placeholder](https://via.placeholder.com/800x400?text=AvalonR+Gameplay)
 
@@ -13,18 +13,23 @@ _AvalonR_ is a space combat game where your ship and crew fight through procedur
 ```bash
 git clone https://github.com/pratybos/project-AvalonR.git
 cd project-AvalonR
-
+```
 Initialize submodules:
+```bash
 git submodule update --init --recursive
-
+```
 Build the Game:
+```bash
 mkdir build
 cd build
 cmake ..
 cmake --build .
+```
 
 Rebuild(after making changes):
+```bash
 ninja
+```
 
 --------------------------------------------------
 
