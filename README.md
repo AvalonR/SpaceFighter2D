@@ -104,10 +104,5 @@ The Dependencies are baked into the game
 
 --------------------------------------------------
 
-📜 License
-MIT License
-
---------------------------------------------------
-
 🚀 Screenshots & Media
 (Coming soon!)
