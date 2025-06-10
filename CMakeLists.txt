@@ -3,6 +3,7 @@ project(Game2D)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(SDLMIXER_VENDORED ON)
 set(SDLTTF_VENDORED ON)
 
 add_subdirectory(dependencies/SDL)

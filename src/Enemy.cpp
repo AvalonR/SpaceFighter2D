@@ -268,9 +268,9 @@ void Enemy::EnemyAI()
             }
             float orbitDirection;
             size_t index = &Entity - &Setup::EntityList[0];
-            if (index < enemyRotations.size())
+            if (index - 1 < enemyRotations.size())
             {
-                orbitDirection = static_cast<float>(enemyRotations[index]);
+                orbitDirection = static_cast<float>(enemyRotations[index-1]);
             }
             else
             {
@@ -330,7 +330,7 @@ void Enemy::EnemyAI()
 
                 TextureManager::animationsVec.emplace_back(0, 20, 200, 0, 1, result);
                 Entity.HP = -0.9999f;
-                Setup::EntityList[0].HP -= 0.2f;
+                Setup::EntityList[0].HP -= (0.2f * Setup::Difficulty);
                 Setup::EntityList[0].effectTimer = 40;
                 Player::hitPlayerLevel = true;
                 Player::hitPlayerWave = true;
@@ -428,7 +428,7 @@ void Enemy::EnemyAI()
                                 [t].destRect.y;
 
 
-                            enemy.HP = Map::lerp(enemy.HP, enemy.HP - 0.1f, 0.02f);
+                            enemy.HP = Map::lerp(enemy.HP, enemy.HP - (0.15f * Setup::Difficulty), 0.02f);
                             enemy.effectTimer = 15;
                             hitSomething = true;
                             break;

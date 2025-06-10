@@ -456,29 +456,29 @@ void UI::Store() {
     BCIcon = {595, 595, 32, 32};
     TextureManager::DrawTextureNP(8, Setup::renderer, &BCIcon, 0); 
     TextManager::RenderText("Price: 200", {550, 554}, {255, 50, 50, 255}, 14);
-    if (Button({760, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Shotgun", {765, 660}, 16) && Setup::TargetCoins >= 300)
+    if (Button({760, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Shotgun", {765, 660}, 16) && Setup::TargetCoins >= 300 && Player::PlayerUpgrades.firemodes[0])
     {
         Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 200;
+        Setup::TargetCoins -= 300;
         Player::PlayerUpgrades.firemodes[0] = true;
     }
     TextManager::RenderText("Spread", {765, 680}, {255, 255, 255, 255}, 16);
     BCIcon = {790, 544, 128, 128};
     TextureManager::DrawTextureNP(17, Setup::renderer, &BCIcon, 0); 
-    TextManager::RenderText("Price: 200", {760, 554}, {255, 50, 50, 255}, 14);
-    if (Button({970, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Radial Fire", {975, 660}, 16) && Setup::TargetCoins >= 300)
+    TextManager::RenderText("Price: 300", {760, 554}, {255, 50, 50, 255}, 14);
+    if (Button({970, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Radial Fire", {975, 660}, 16) && Setup::TargetCoins >= 300 && Player::PlayerUpgrades.firemodes[1])
     {
         Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 200;
+        Setup::TargetCoins -= 300;
         Player::PlayerUpgrades.firemodes[1] = true;
     }
     BCIcon = {1000, 544, 128, 128};
     TextureManager::DrawTextureNP(15, Setup::renderer, &BCIcon, 0); 
-    TextManager::RenderText("Price: 200", {970, 554}, {255, 50, 50, 255}, 14);
-    if (Button({1180, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Parallel", {1185, 660}, 16) && Setup::TargetCoins >= 300)
+    TextManager::RenderText("Price: 300", {970, 554}, {255, 50, 50, 255}, 14);
+    if (Button({1180, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Parallel", {1185, 660}, 16) && Setup::TargetCoins >= 300 && Player::PlayerUpgrades.firemodes[2])
     {
         Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 200;
+        Setup::TargetCoins -= 300;
         Player::PlayerUpgrades.firemodes[2] = true;
     }
     TextManager::RenderText("Fire", {1185, 680}, {255, 255, 255, 255}, 16);
@@ -486,7 +486,7 @@ void UI::Store() {
     TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0);
     BCIcon = {1210, 544, 128, 128};
     TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0); 
-    TextManager::RenderText("Price: 200", {1180, 554}, {255, 50, 50, 255}, 14);
+    TextManager::RenderText("Price: 300", {1180, 554}, {255, 50, 50, 255}, 14);
     if (Button({1200, 740, 150, 35}, {255, 140, 66, 180}, "Next Level", {1205, 740}, 24))
     {
         Setup::is_Paused = false;

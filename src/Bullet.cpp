@@ -136,7 +136,7 @@ void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double
     else
     {
         bullet.owner = 1;
-        bullet.damage = 0.05f;
+        bullet.damage = (0.05f * Setup::Difficulty);
         BulletList.emplace_back(bullet);
         Sound::PlaySound(1);
     }

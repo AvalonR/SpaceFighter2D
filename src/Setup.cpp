@@ -59,7 +59,7 @@ void Setup::initialization()
     {
         std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
     }
-    if (!Mix_Init(MIX_INIT_WAVPACK))
+    if (!Mix_Init(MIX_INIT_MP3))
     {
         std::cout << "Mix_Init Error: " << SDL_GetError() << std::endl;
     }
