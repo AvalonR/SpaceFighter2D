@@ -1,0 +1,18 @@
+[submodule "dependencies/SDL"]
+	path = dependencies/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "dependencies/SDL_image"]
+	path = dependencies/SDL_image
+	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "dependencies/SDL_mixer"]
+	path = dependencies/SDL_mixer
+	url = https://github.com/libsdl-org/SDL_mixer.git
+[submodule "dependencies/SDL_ttf"]
+	path = dependencies/SDL_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git
+[submodule "dependencies/freetype"]
+	path = dependencies/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "dependencies/harfbuzz"]
+	path = dependencies/harfbuzz
+	url = https://github.com/harfbuzz/harfbuzz.git
