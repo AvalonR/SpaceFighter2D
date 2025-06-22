@@ -9,8 +9,11 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_mixer/SDL_mixer.h>
+#include <cstdint>
+#include <random>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include "Map.h"
 
@@ -28,6 +31,7 @@ struct EntityStats
     double rotation;
     Vector velocity;
     int shooting_delay, effectTimer;
+    uint32_t UID;
 };
 
 class Setup
@@ -53,6 +57,11 @@ public:
     static int WindowHeight, WindowWidth;
     static SDL_Renderer* renderer;
     static Vector mouseCoordin;
+//for id tracking of entities
+    static std::mt19937 rng;
+    static std::unordered_set<uint32_t> usedIDs;
+    static uint32_t generateID(int TypeID);
+
     static void initialization();
     static void gameLoop();
     static void restart();

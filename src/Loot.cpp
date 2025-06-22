@@ -53,3 +53,40 @@ void Loot::UpdateCoins() {
                    }),
         CoinVector.end());
 }
+std::vector<Particle> Loot::ParticleVector;
+
+SDL_FRect particle = {0, 0, 8, 8};
+void Loot::ParticleCreation(SDL_FPoint origin, SDL_Color color, int duration, int quantity) {
+    for (int i = 0; i < quantity; i++)
+    {
+        particle.x = origin.x;
+        particle.y = origin.y;
+        Vector velocity;
+        velocity.x = 0.2 * Enemy::Randomizer(-1, 1);
+        velocity.y = 0.2 * Enemy::Randomizer(-2, 0);
+        ParticleVector.emplace_back(particle, velocity, color, duration);
+    }
+}
+void Loot::UpdateParticles() {
+    for (auto& part : ParticleVector)
+    {
+        part.velocity.x = Map::lerp(part.velocity.x, 0, 0.01);
+        part.velocity.y = Map::lerp(part.velocity.y, 0, 0.01);
+        part.dst.x += part.velocity.x * Setup::speed;
+        part.dst.y += part.velocity.y * Setup::speed;
+        part.dst.w = part.dst.w * (1.0f - (part.lifetime * 0.0001));
+        part.dst.h = part.dst.h * (1.0f - (part.lifetime * 0.0001));
+        part.lifetime--; 
+    }
+    ParticleVector.erase(
+        std::remove_if(ParticleVector.begin(), ParticleVector.end(),
+                   [](const Particle& part) {
+                       if (part.lifetime < 0) {
+                            return true;
+                       }
+                       else {
+                            return false;
+                       }
+                   }),
+        ParticleVector.end());
+}

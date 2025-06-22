@@ -4,6 +4,7 @@
 
 #include "Setup.h"
 
+#include <cstdint>
 #include <iostream>
 #include <ostream>
 #include <fstream>
@@ -45,6 +46,25 @@ std::string Setup::basePath;
 int Setup::CurrentLevel;
 std::vector<int> Setup::ScoreHistory;
 
+std::mt19937 Setup::rng{std::random_device{}()};
+std::unordered_set<uint32_t> Setup::usedIDs;
+
+uint32_t Setup::generateID(int TypeID) {
+    if (TypeID < 0 || TypeID > 15) {
+        throw std::invalid_argument("Type ID must be between 0 and 15");
+    }
+
+    std::uniform_int_distribution<uint32_t> dist{0, (1u << 28) - 1}; // 28 bits for randomness
+    uint32_t id;
+    do {
+        uint32_t base = dist(rng);             // 28-bit random part
+        id = (base << 4) | (TypeID & 0xF);     // Embed TypeID in last 4 bits
+    } while (usedIDs.count(id));
+    
+    usedIDs.insert(id);
+    return id;
+}
+
 void Setup::initialization()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
@@ -79,7 +99,8 @@ void Setup::initialization()
     basePath.erase(basePath.length() - 6);
     std::replace(basePath.begin(), basePath.end(), '\\', '/');
     std::cout << "Base path: " << basePath << std::endl;
-    SDL_Surface* icon = IMG_Load("A:/C++/Game2D/assets/icon.png");
+    std::string assetspath = basePath + "/assets/icon.png";
+    SDL_Surface* icon = IMG_Load(assetspath.c_str());
     SDL_SetWindowIcon(window, icon);
     SDL_DestroySurface(icon);
     renderer = SDL_CreateRenderer(window, "opengl");
@@ -94,23 +115,21 @@ void Setup::initialization()
     Sound::Init();
     Sound::PlayMusic("space-158081.mp3", 0);
     //Loading animations
-IMG_Animation* explosion = TextureManager::LoadAnimation("explosion.gif");
-IMG_Animation* deathAnimationSuicide = TextureManager::LoadAnimation("torpedodest.gif");
-IMG_Animation* deathAnimationBomber = TextureManager::LoadAnimation("bomberdest.gif");
-IMG_Animation* deathAnimationDreadnought = TextureManager::LoadAnimation("dreadnoughtdest.gif");
-IMG_Animation* beam = TextureManager::LoadAnimation("beam.gif");
-IMG_Animation* middlebeam = TextureManager::LoadAnimation("middlebeam.gif");
-IMG_Animation* dreadnoughtweapon = TextureManager::LoadAnimation("dreadnoughtlaser.gif");
-IMG_Animation* enginesPlayer = TextureManager::LoadAnimation("enginesPlayer.gif");
-IMG_Animation* enginesBomber = TextureManager::LoadAnimation("enginesBomber.gif");
-IMG_Animation* enginesTorpedo = TextureManager::LoadAnimation("enginesTorpedo.gif");
-IMG_Animation* enginesDreadnought = TextureManager::LoadAnimation("enginesDreadnought.gif");
+    IMG_Animation* explosion = TextureManager::LoadAnimation("explosion.gif");
+    IMG_Animation* deathAnimationSuicide = TextureManager::LoadAnimation("torpedodest.gif");
+    IMG_Animation* deathAnimationBomber = TextureManager::LoadAnimation("bomberdest.gif");
+    IMG_Animation* deathAnimationDreadnought = TextureManager::LoadAnimation("dreadnoughtdest.gif");
+    IMG_Animation* fullbeam = TextureManager::LoadAnimation("fullbeam.gif");
+    IMG_Animation* dreadnoughtweapon = TextureManager::LoadAnimation("dreadnoughtlaser.gif");
+    IMG_Animation* enginesPlayer = TextureManager::LoadAnimation("enginesPlayer.gif");
+    IMG_Animation* enginesBomber = TextureManager::LoadAnimation("enginesBomber.gif");
+    IMG_Animation* enginesTorpedo = TextureManager::LoadAnimation("enginesTorpedo.gif");
+    IMG_Animation* enginesDreadnought = TextureManager::LoadAnimation("enginesDreadnought.gif");
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationSuicide);
     TextureManager::ImgAnimationsVec.emplace_back(explosion);
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationBomber);
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationDreadnought);
-    TextureManager::ImgAnimationsVec.emplace_back(beam);
-    TextureManager::ImgAnimationsVec.emplace_back(middlebeam);
+    TextureManager::ImgAnimationsVec.emplace_back(fullbeam);
     TextureManager::ImgAnimationsVec.emplace_back(dreadnoughtweapon);
     TextureManager::ImgAnimationsVec.emplace_back(enginesPlayer);
     TextureManager::ImgAnimationsVec.emplace_back(enginesBomber);
@@ -205,12 +224,14 @@ void Setup::restart()
     if (Restart)
     {
         EntityList.clear();
+        usedIDs.clear();
         Bullet::BulletList.clear();
         Bullet::ScheduledBulletList.clear();
         TextureManager::animationsVec.clear();
+        Loot::ParticleVector.clear();
         Loot::CoinVector.clear();
         Player player;
-        EntityList.emplace_back(player.HP, player.BC, 0, player.x, player.y, player.TextureID, player.srcR, player.dstR, player.rotation, player.velocity, player.shooting_delay);
+        EntityList.emplace_back(player.HP, player.BC, 0, player.x, player.y, player.TextureID, player.srcR, player.dstR, player.rotation, player.velocity, player.shooting_delay, 0, generateID(0));
         Restart = false;
         is_Paused = false;
         Mix_HaltChannel(-1);
@@ -236,6 +257,7 @@ void Setup::nextLevel()
     Bullet::BulletList.clear();
     Bullet::ScheduledBulletList.clear();
     TextureManager::animationsVec.clear();
+    Loot::ParticleVector.clear();
     Player::hitPlayerLevel = false;
     is_Paused = true;
     UI::CurrentLayer = 4;
@@ -292,30 +314,46 @@ void Setup::update()
             {
                 Entity.effectTimer--;
             }
+            if (Entity.velocity.x != 0.0f || Entity.velocity.y != 0.0f) {
+                bool found = false;
+
+                for (auto& animation : TextureManager::animationsVec) {
+                    if (animation.AnimationNumber == 6 + Entity.type && animation.EUID == Entity.UID) {
+                        SDL_FRect bigger = Entity.dest;
+                        bigger.h += 10;
+                        animation.destRect = bigger;
+                        animation.angle = Entity.rotation;
+                        found = true;
+                        break; 
+                    }
+                }
+                if (!found) {
+                    TextureManager::animationsVec.emplace_back(0, 10, 200, Entity.rotation, 6 + Entity.type, Entity.dest, Entity.UID);
+                }
+            } else {
+            // Entity is idle — optionally remove its movement animation
+                TextureManager::animationsVec.erase(std::remove_if(TextureManager::animationsVec.begin(), TextureManager::animationsVec.end(), [&](AnimationVector& anim) {
+                    return anim.AnimationNumber == 7 + Entity.type && anim.EUID == Entity.UID;
+                    }), TextureManager::animationsVec.end());
+            }
         }
         Loot::UpdateCoins();
+        Loot::UpdateParticles();
         TextureManager::AnimationCleaning(); 
-        Bullet::updateBullets();
         Enemy::EnemyAI();
+        Bullet::updateBullets();
         Map::MapUpdate();
     }
 }
-struct StoringEffectTimerEntities {
-    int type;
-    SDL_FRect dest;
-};
-std::vector<StoringEffectTimerEntities> EntityEffectVec;
 void Setup::render()
 {
     SDL_RenderClear(renderer);
     Map::MapRender();
-
     for (auto &Entity : EntityList)
     {
         if (Entity.TextureID >= 0 && Entity.TextureID < TextureManager::TextureVec.size()) {
             if (Entity.effectTimer > 0) {
                 SDL_SetTextureColorMod(TextureManager::TextureVec[Entity.TextureID], 255, 100, 100);
-                EntityEffectVec.emplace_back(Entity.type, Entity.dest);
             } else {
                 SDL_SetTextureColorMod(TextureManager::TextureVec[Entity.TextureID], 255, 255, 255);
             }
@@ -331,19 +369,16 @@ void Setup::render()
     for (auto& animation : TextureManager::animationsVec)
     {
         bool colorMod = false;
-        if (!EntityEffectVec.empty()) {
-            for (auto& Entity : EntityEffectVec) {
-            //for (auto& Entity : EntityList) {
-                if (animation.AnimationNumber == 6 && Entity.type == 3) {
-                    if (SDL_HasRectIntersectionFloat(&Entity.dest, &animation.destRect)) {
-                        colorMod = true;
-                        }
+        for (auto& Entity : EntityList) {
+            if (animation.AnimationNumber == 5 && Entity.type == 3 && Entity.effectTimer > 0) {
+                if (Entity.UID == animation.EUID) {
+                    colorMod = true;
+                    }
                 }
                 /*if (animation.AnimationNumber == 7 + Entity.type)
                     if (SDL_HasRectIntersectionFloat(&Entity.dest, &animation.destRect)) {
                         animation.destRect = Entity.dest;
                 }*/
-            }
         }
         TextureManager::DrawAnimation(animation, colorMod);
     }
@@ -354,11 +389,17 @@ void Setup::render()
         SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
         SDL_RenderRect(Setup::renderer, &coin.dst);
     }
+    for (auto& Part : Loot::ParticleVector)
+    {
+        SDL_SetRenderDrawColor(Setup::renderer, Part.color.r, Part.color.g, Part.color.b, Part.color.a);
+        SDL_RenderFillRect(Setup::renderer, &Part.dst);
+        SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
+        SDL_RenderRect(Setup::renderer, &Part.dst);
+    }
     ScoreChange();
     CoinsChange();
     UI::RenderUI();
     SDL_RenderPresent(renderer);
-    EntityEffectVec.clear();
 }
 
 void Setup::quit()
@@ -411,3 +452,4 @@ void Setup::CoinsChange()
 
     coinsUpdateDelay = 7;
 }
+

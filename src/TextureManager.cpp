@@ -76,8 +76,13 @@ void TextureManager::DrawAnimation(AnimationVector& animationVector, bool colorM
             SDL_Texture* texture = SDL_CreateTextureFromSurface(Setup::renderer, ImgAnimationsVec[animationVector.AnimationNumber]->frames[animationVector.frameNumber]);
             if (colorMod) {
                 SDL_SetTextureColorMod(texture, 255, 100, 100);
+            }   
+            if (animationVector.AnimationNumber == 4) {
+                SDL_FPoint rotationCenter = {animationVector.destRect.w / 2, 0};
+                SDL_RenderTextureRotated(Setup::renderer, texture, nullptr, &animationVector.destRect, animationVector.angle, &rotationCenter, SDL_FLIP_NONE);
+            } else {
+                SDL_RenderTextureRotated(Setup::renderer, texture, nullptr, &animationVector.destRect, animationVector.angle, nullptr, SDL_FLIP_NONE);
             }
-            SDL_RenderTextureRotated(Setup::renderer, texture, nullptr, &animationVector.destRect, animationVector.angle, nullptr, SDL_FLIP_NONE);
             SDL_DestroyTexture(texture);
         }
     }

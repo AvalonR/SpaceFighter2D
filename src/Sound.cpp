@@ -15,27 +15,30 @@ void Sound::Init()
     SDL_AudioSpec spec;
     spec.freq = 48000;
     spec.channels = 2;
-    spec.format = SDL_AUDIO_S16BE;
+    spec.format = SDL_AUDIO_S32BE;
     if (!Mix_OpenAudio(0, &spec))
     {
         std::cout << "Error opening audio device channel" << SDL_GetError() << std::endl;
         return;
     }
-    Mix_AllocateChannels(64);
+    Mix_AllocateChannels(96);
     Mix_Volume(-1, 40);
     Mix_VolumeMusic(20);
-    LoadSound("playerlaser.wav");
-    LoadSound("enemylaser.wav");
-    LoadSound("shipexplosion.wav");
-    LoadSound("hit.wav");
-    LoadSound("buttonclick.wav");
-    LoadSound("coin_drop2.wav");
-    LoadSound("coin_recieved2.wav");
-    LoadSound("lasercharge_normalized.wav");
-    LoadSound("laserbeam_normalized.wav");
-    LoadSound("earnxp_normalized.wav");
-    LoadSound("levelup_normalized.wav");
-    LoadSound("message_normalized.wav");
+    LoadSound("playerlaserFO.wav");
+    LoadSound("enemylaserFO.wav");
+    LoadSound("shipexplosionFO.wav");
+    LoadSound("hitFO.wav");
+    LoadSound("buttonclickFO.wav");
+    LoadSound("coin_drop2FO.wav");
+    LoadSound("coin_recieved2FO.wav");
+    LoadSound("lasercharge_normalizedFO.wav");
+    LoadSound("laserBuzzFPFO.wav");
+    LoadSound("earnxp_normalizedFO.wav");
+    LoadSound("levelup_normalizedFO.wav");
+    LoadSound("message_normalizedFO.wav");
+    LoadSound("sparkFFO.wav");
+    LoadSound("sparkSFO.wav");
+    LoadSound("reloadFO.wav");
     Mix_ReserveChannels(1);
     VolumeAdjustmentChannel[0] = 104;
     VolumeAdjustmentChannel[1] = 34;
@@ -58,12 +61,13 @@ void Sound::LoadSound(const char* filename) {
     }
 }
 void Sound::VolumeAdjustment() {
-
     std::unordered_map<int, int> soundInstanceCount;
+    
     // First pass: count how many of each sound ID are playing
     for (const auto& v : ChannelPlayingVector) {
         soundInstanceCount[v.soundchosen]++;
     }
+    
     // Second pass: set volume per sound instance, scaled to avoid stacking volume
     for (auto& v : ChannelPlayingVector) {
         int count = soundInstanceCount[v.soundchosen];
@@ -71,31 +75,31 @@ void Sound::VolumeAdjustment() {
 
         // Pick the base volume level based on category
         if (v.soundchosen == 4 || v.soundchosen == 11 || v.soundchosen == 10 || v.soundchosen == 9) {
-            baseVolume = VolumeAdjustmentChannel[1];
-        } else if (v.soundchosen == 0 || v.soundchosen == 5 || v.soundchosen == 6) {
-            baseVolume = VolumeAdjustmentChannel[2];
-        } else if (v.soundchosen == 1 || v.soundchosen == 2 || v.soundchosen == 3 || v.soundchosen == 7 || v.soundchosen == 8 ) {
-            baseVolume = VolumeAdjustmentChannel[3];
+            baseVolume = VolumeAdjustmentChannel[1]; // UI sounds
+        } else if (v.soundchosen == 0 || v.soundchosen == 5 || v.soundchosen == 6 || v.soundchosen == 14) {
+            baseVolume = VolumeAdjustmentChannel[2]; // Player actions
+        } else if (v.soundchosen == 1 || v.soundchosen == 2 || v.soundchosen == 3 || 
+                   v.soundchosen == 7 || v.soundchosen == 8 || v.soundchosen == 12 || v.soundchosen == 13) {
+            baseVolume = VolumeAdjustmentChannel[3]; // Effects
         }
 
-        // Scale the volume down based on number of concurrent plays
+        // Better scaling algorithm - use square root to prevent too much volume reduction
         int scaledVolume = baseVolume;
         if (count > 1) {
-            scaledVolume = baseVolume / count;
+            scaledVolume = static_cast<int>(baseVolume / sqrt(count));
         }
 
         Mix_Volume(v.channel, scaledVolume);
     }
+    
+    // Clean up finished channels - Fixed the logic (was backwards)
     ChannelPlayingVector.erase(
-    std::remove_if(ChannelPlayingVector.begin(), ChannelPlayingVector.end(),
-        [](const VolumeAdj& v) {
-            if (Mix_Playing(v.channel) != 0) {
-                return true;
-            }
-            return false;
-        }),
-    ChannelPlayingVector.end()
-);
+        std::remove_if(ChannelPlayingVector.begin(), ChannelPlayingVector.end(),
+            [](const VolumeAdj& v) {
+                return Mix_Playing(v.channel) == 0;  
+            }),
+        ChannelPlayingVector.end()
+    );
 }
 
 void Sound::PlaySound(int soundchoice)
@@ -103,7 +107,7 @@ void Sound::PlaySound(int soundchoice)
     int channel = Mix_PlayChannel(-1, SoundVector[soundchoice], 0);
     if (channel == -1)
     {
-        std::cout << "Error playing sound effect" << std::endl;
+        std::cout << "Error playing sound effect: " << SDL_GetError() << std::endl;
     }
     else {
         ChannelPlayingVector.emplace_back(channel, soundchoice);
@@ -113,7 +117,13 @@ void Sound::PlaySpecificChannelSound(int soundchoice, int channel)
 {
     if (Mix_PlayChannel(channel, SoundVector[soundchoice], 0) == -1)
     {
-        std::cout << "Error playing sound effect" << std::endl;
+        std::cout << "Error playing sound effect: " << SDL_GetError() << std::endl;
+    }
+    else {
+        // Add to tracking if it's not a reserved channel
+        if (channel > 0) {
+            ChannelPlayingVector.emplace_back(channel, soundchoice);
+        }
     }
 }
 void Sound::PlayMusic(const char* filename, int loops)

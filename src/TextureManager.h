@@ -17,6 +17,7 @@ struct AnimationVector
 {
     int frameNumber, frameDelay, expiration, angle, AnimationNumber;
     SDL_FRect destRect;
+    uint32_t EUID;
 };
 
 class TextureManager {

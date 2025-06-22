@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "Loot.h"
 #include "Enemy.h"
 #include "Sound.h"
 #include "Player.h"
@@ -141,7 +142,7 @@ void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double
         Sound::PlaySound(1);
     }
 }
-
+SDL_FRect BulletParticle;
 void Bullet::updateBullets()
 {
     if (!ScheduledBulletList.empty()) {
@@ -169,7 +170,7 @@ void Bullet::updateBullets()
                                index++;
                                SDL_FRect EntitycollisionRect = {Entity.dest.x * 1.01f, Entity.dest.y * 1.01f, Entity.dest.w * 0.95f,Entity.dest.w * 0.95f};
                                SDL_FRect BulletcollisionRect = {bullet.dstR->x * 1.05f, bullet.dstR->y * 1.05f, bullet.dstR->w * 0.5f,bullet.dstR->w * 0.5f};
-                               if (SDL_HasRectIntersectionFloat(&BulletcollisionRect, &EntitycollisionRect) && bullet.owner != Entity.type)
+                               if (SDL_GetRectIntersectionFloat(&BulletcollisionRect, &EntitycollisionRect, &BulletParticle) && bullet.owner != Entity.type)
                                {
                                    Entity.HP -= bullet.damage;
                                    Entity.effectTimer = 25;
@@ -188,6 +189,9 @@ void Bullet::updateBullets()
                                        Entity.velocity.x = Map::lerp(Entity.velocity.x, std::cos(angle) * 0.2, 0.1f);
                                        Entity.velocity.y = Map::lerp(Entity.velocity.y, std::sin(angle) * 0.2, 0.1f);
                                    }
+                                    Sound::PlaySound(13);
+                                    SDL_FPoint spark = {BulletParticle.x, BulletParticle.y};
+                                    Loot::ParticleCreation(spark, {255, 155, 0, 255}, 300, 3);
                                    return true;
                                }
                            }

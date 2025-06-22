@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #include "Bullet.h"
@@ -152,7 +153,7 @@ void Enemy::SpawnEnemy(int type)
     }
 
     Setup::EntityList.emplace_back(enemy.HP, enemy.BC, type, enemy.x, enemy.y, type, enemy.srcR, enemy.dstR,
-                                   enemy.rotation, enemy.velocity, enemy.shooting_delay);
+                                   enemy.rotation, enemy.velocity, enemy.shooting_delay, 0, Setup::generateID(type));
     enemyRotations.emplace_back((Randomizer(0, 1) == 0) ? 1 : -1);
 }
 
@@ -180,7 +181,7 @@ void Enemy::EnemyAI()
             {
                 a.h = a.h * 2;
                 a.w = a.w * 2;
-                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 2, a);
+                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 2, a, Entity.UID);
                 Setup::TargetScore += 20;
                 Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.15f, 1.0f);
@@ -191,7 +192,7 @@ void Enemy::EnemyAI()
             {
                 a.w = a.w * 1.2;
                 a.h = (a.h + 20) * 1.2;
-                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a);
+                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a, Entity.UID);
                 Setup::TargetScore += 25;
                 Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.1f, 1.0f);
@@ -202,7 +203,7 @@ void Enemy::EnemyAI()
             {
                 a.w = a.w * 1.2;
                 a.h = (a.h + 20) * 1.2;
-                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a);
+                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a, Entity.UID);
             } 
             if (Entity.type == 3)
             {
@@ -211,11 +212,11 @@ void Enemy::EnemyAI()
                 a.w = 256;
                 a.h = 256;
                 for (auto& animation : TextureManager::animationsVec) {
-                    if (animation.AnimationNumber == 6 || animation.AnimationNumber == 4 || animation.AnimationNumber == 5) {
+                    if (animation.AnimationNumber == 4 && animation.EUID == Entity.UID || animation.AnimationNumber == 5 && animation.EUID == Entity.UID) {
                         animation.expiration = -1;
                     }
                 }
-                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 3, a);
+                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 3, a, Entity.UID);
                 Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
                 Setup::TargetScore += 250;
@@ -231,7 +232,7 @@ void Enemy::EnemyAI()
     {
         float forceX = 0.0f, forceY = 0.0f;
 
-        if (Entity.type == 1) // Circling Enemy (Bullet Hell)
+        if (Entity.type == 1) 
         {
             // Compute attraction to player
             float dx = Setup::EntityList[0].dest.x - Entity.x;
@@ -304,7 +305,6 @@ void Enemy::EnemyAI()
             Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.1f);
         }
 
-        // **TYPE 2 - Seeker Enemy (Suicide Bomber)**
         if (Entity.type == 2)
         {
             float dx = Setup::EntityList[0].dest.x - Entity.x;
@@ -328,7 +328,7 @@ void Enemy::EnemyAI()
                 result.w = std::max(Entity.dest.w, result.w);
                 result.h = std::max(Entity.dest.h, result.h);
 
-                TextureManager::animationsVec.emplace_back(0, 20, 200, 0, 1, result);
+                TextureManager::animationsVec.emplace_back(0, 20, 200, 0, 1, result, Entity.UID);
                 Entity.HP = -0.9999f;
                 Setup::EntityList[0].HP -= (0.2f * Setup::Difficulty);
                 Setup::EntityList[0].effectTimer = 40;
@@ -372,114 +372,165 @@ void Enemy::EnemyAI()
         }
         if (Entity.type == 3)
         {
-            Entity.x = Map::lerp(Entity.x, Setup::EntityList[0].x, 0.008f);
-            if (Entity.y <= 80 || Entity.y >= 120)
-            {
-                Entity.y = Map::lerp(Entity.y, 100, 0.02f);
-                float dx = Setup::EntityList[0].dest.x - Entity.x;
-                float dy = 100 - Entity.y;
+            float forceX = 0.0f, forceY = 0.0f;
+            float dy = 0;
+            float dx = Setup::EntityList[0].dest.x - Entity.x;
+            Entity.y = Map::lerp(Entity.y, 100.0f, 0.02f);
+            if (Entity.y <= 60 || Entity.y >= 140) {
+                dy = 100.0f - Entity.y;
 
-                Entity.rotation = Map::lerp(Entity.rotation, std::atan2(dy, dx) * (180.0f / M_PI) + 180, 0.2f);
             }
-            else
-            {
-                Entity.rotation = Map::lerp(Entity.rotation, 180, 0.02f);
-            }
-            Entity.dest.x = Entity.x;
-            Entity.dest.y = Entity.y;
+
+            float distance = std::sqrt(dx * dx + dy * dy);
+
+            forceX += (dx / distance) * 0.7f;
+            forceY += (dy / distance) * 0.7f;
+            dx = Setup::EntityList[0].x - Entity.x;
+            dy = Setup::EntityList[0].y - Entity.y;
+            float current = Entity.rotation;
+            float target = std::atan2(dy, dx) * (180.0f / M_PI) + 90.0f;
+
+            float delta = fmodf((target - current + 540.0f), 360.0f) - 180.0f;
+            Entity.rotation = current + delta * 0.009f;
             if (Entity.shooting_delay == 400)
             {
                 SDL_FRect shipanim = {Entity.dest.x - Entity.dest.w / 2, Entity.dest.y - Entity.dest.h / 2, 256, 256};
-                TextureManager::animationsVec.emplace_back(0, 20, 800, 180, 6, shipanim);
+                TextureManager::animationsVec.emplace_back(0, 20, 800, 180, 5, shipanim, Entity.UID);
                 Sound::PlaySound(7);
             }
             if (Entity.shooting_delay <= 0)
             {
-                SDL_FRect a = {Entity.x + Entity.dest.w / 2 - 128, Entity.y + Entity.dest.h, 256, 256};
-                TextureManager::animationsVec.emplace_back(0, 1, 450, 0, 4, a);
-                a.y += 256;
-                TextureManager::animationsVec.emplace_back(0, 1, 450, 0, 5, a);
-                a.y += 256;
-                TextureManager::animationsVec.emplace_back(0, 1, 450, 0, 5, a);
+                SDL_FRect a = {Entity.x + Entity.dest.w / 2 - 128, Entity.y + Entity.dest.h, 256, 1};
+                TextureManager::animationsVec.emplace_back(0, 1, 450, Entity.rotation - 180, 4, a, Entity.UID);
                 Sound::PlaySound(8);
                 Entity.shooting_delay = 1200;
             }
             for (int t = 0; t < TextureManager::animationsVec.size(); t++)
             {
-                if (TextureManager::animationsVec[t].AnimationNumber == 4 || TextureManager::animationsVec[t].
-                    AnimationNumber == 5)
+            if (TextureManager::animationsVec[t].EUID == Entity.UID) {
+                if (TextureManager::animationsVec[t].AnimationNumber == 4)
                 {
-                    TextureManager::animationsVec[t].destRect.x = Entity.x + Entity.dest.w / 2 - 128;
-                    SDL_FRect LaserHitBox = {
-                        TextureManager::animationsVec[t].destRect.x + TextureManager::animationsVec[t].destRect.w / 3,
-                        TextureManager::animationsVec[t].destRect.y,
-                        TextureManager::animationsVec[t].destRect.w - TextureManager::animationsVec[t].destRect.w * 2 /
-                        3,
-                        TextureManager::animationsVec[t].destRect.h
+                    TextureManager::animationsVec[t].angle = Entity.rotation - 180;
+                    float angleRad = (Entity.rotation - 90.0f) * (M_PI / 180.0f);  
+                    float beamOffset = 100.0f;  
+
+                    float cosA = std::cos(angleRad);
+                    float sinA = std::sin(angleRad);
+                    float HalfWidth = TextureManager::animationsVec[t].destRect.w / 2;
+                    float Height = TextureManager::animationsVec[t].destRect.h;
+
+                    float originX = Entity.x + Entity.dest.w / 2 + cosA * beamOffset;
+                    float originY = Entity.y + Entity.dest.h / 2 + sinA * beamOffset ;
+                        
+
+                    angleRad = angleRad + M_PI / 7.0f;  
+                    cosA = std::cos(angleRad - 90);
+                    sinA = std::sin(angleRad - 90);
+
+                    TextureManager::animationsVec[t].destRect.x = originX - HalfWidth;
+                    TextureManager::animationsVec[t].destRect.y = originY;
+
+
+                    SDL_FPoint localCorners[6] = {
+                        { -HalfWidth/2, 0.0f      }, // Top-left
+                        {  HalfWidth/2, 0.0f      }, // Top-right
+                        {  HalfWidth/2, Height    }, // Bottom-right
+                        { -HalfWidth/2, Height    },  // Bottom-left
+                        { 0.0f, 0.0f    },  // Middle 
+                        { 0.0f, Height    }  // Middle 
                     };
+
+                    SDL_FPoint Beamcorners[6];
+                    for (int i = 0; i < 6; ++i) {
+                        float lx = localCorners[i].x;
+                        float ly = localCorners[i].y;
+
+                        float rx = lx * cosA - ly * sinA;
+                        float ry = lx * sinA + ly * cosA;
+
+                        Beamcorners[i].x = originX + rx;
+                        Beamcorners[i].y = originY + ry;
+                    }
+
+                    
+                    // SDL_SetRenderDrawColor(Setup::renderer, 255, 200, 0, 200);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[0].x, Beamcorners[0].y, Beamcorners[1].x, Beamcorners[1].y);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[0].x, Beamcorners[0].y, Beamcorners[3].x, Beamcorners[3].y);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[1].x, Beamcorners[1].y, Beamcorners[2].x, Beamcorners[2].y);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[3].x, Beamcorners[3].y, Beamcorners[2].x, Beamcorners[2].y);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[3].x, Beamcorners[3].y, Beamcorners[2].x, Beamcorners[2].y);
+                    //
+                    // SDL_SetRenderDrawColor(Setup::renderer, 255, 0, 0, 200);
+                    // SDL_RenderLine(Setup::renderer, Beamcorners[4].x, Beamcorners[4].y, Beamcorners[5].x, Beamcorners[5].y);
+
+                    SDL_FPoint LinesForChecking[3][2] = {
+                            {Beamcorners[0].x, Beamcorners[0].y, Beamcorners[3].x, Beamcorners[3].y},
+                            {Beamcorners[1].x, Beamcorners[1].y, Beamcorners[2].x, Beamcorners[2].y},
+                            {Beamcorners[4].x, Beamcorners[4].y, Beamcorners[5].x, Beamcorners[5].y},
+                    };
+                    
                     bool hitSomething = false;
                     for (auto& enemy : Setup::EntityList)
                     {
-                        if (enemy.type != 3 && SDL_HasRectIntersectionFloat(&enemy.dest, &LaserHitBox))
+                        for (int i = 0; i < 3; i++)
                         {
-                            SDL_FRect Intersection;
-                            SDL_GetRectIntersectionFloat(&enemy.dest, &LaserHitBox, &Intersection);
-                            TextureManager::animationsVec[t].destRect.h = Intersection.y - TextureManager::animationsVec
-                                [t].destRect.y;
-
-
-                            enemy.HP = Map::lerp(enemy.HP, enemy.HP - (0.15f * Setup::Difficulty), 0.02f);
-                            enemy.effectTimer = 15;
-                            hitSomething = true;
-                            break;
-                        }
-                    }
-                    if (t > 0)
-                    {
-                        if (TextureManager::animationsVec[t - 1].AnimationNumber == 4 || TextureManager::animationsVec[t - 1].AnimationNumber == 5)
-                        {
-                            if (TextureManager::animationsVec[t - 1].destRect.h < 255)
+                            if (enemy.type != 3 && SDL_GetRectAndLineIntersectionFloat(&enemy.dest, &LinesForChecking[i][0].x, &LinesForChecking[i][0].y, &LinesForChecking[i][1].x, &LinesForChecking[i][1].y) )
                             {
-                                TextureManager::animationsVec[t].destRect.h = 0;
+                                TextureManager::animationsVec[t].destRect.h = Map::lerp(TextureManager::animationsVec[t].destRect.h, LinesForChecking[i][1].y - TextureManager::animationsVec[t].destRect.y, 0.05f);
+
+                                enemy.HP = Map::lerp(enemy.HP, enemy.HP - (0.15f * Setup::Difficulty), 0.02f);
+                                enemy.effectTimer = 15;
+                                Sound::PlaySound(12);
+                                SDL_FPoint spark = {LinesForChecking[i][1].x, LinesForChecking[i][1].y};
+                                Loot::ParticleCreation(spark, {255, 155, 0, 255}, 300, 2);
+                                hitSomething = true;
+                                break;
                             }
                         }
                     }
                     if (!hitSomething)
                     {
-                        bool canRestore = true;
-
-                        if (t > 0)
-                        {
-                            if (TextureManager::animationsVec[t - 1].AnimationNumber == 4 ||
-                                TextureManager::animationsVec[t - 1].AnimationNumber == 5)
-                            {
-                                if (TextureManager::animationsVec[t - 1].destRect.h < 255)
-                                // Small threshold to avoid flickering
-                                {
-                                    canRestore = false;
-                                }
-                            }
-                        }
-
-                        if (canRestore)
-                        {
-                            TextureManager::animationsVec[t].destRect.h = Map::lerp(
-                                TextureManager::animationsVec[t].destRect.h,
-                                256,
-                                0.1f
-                            );
-                        }
+                        TextureManager::animationsVec[t].destRect.h = Map::lerp(TextureManager::animationsVec[t].destRect.h, 748, 0.1f);
                     }
                 }
 
-                if (TextureManager::animationsVec[t].AnimationNumber == 6)
+                if (TextureManager::animationsVec[t].AnimationNumber == 5)
                 {
                     TextureManager::animationsVec[t].destRect.x = Entity.dest.x - Entity.dest.w / 2.3;
                     TextureManager::animationsVec[t].destRect.y = Entity.dest.y - Entity.dest.h / 5.8;
                     TextureManager::animationsVec[t].angle = Entity.rotation;
                 }
+                }
             }
+            // Repulsion from other enemies
+            for (auto& OtherEnemy : Setup::EntityList)
+            {
+                if (&Entity == &OtherEnemy) continue;
+
+                float diffX = Entity.x - OtherEnemy.x;
+                float diffY = Entity.y - OtherEnemy.y;
+                float dist = std::sqrt(diffX * diffX + diffY * diffY);
+
+                if (dist < 100 && dist > 40)
+                {
+                    float repelForce = 0.3f / dist;
+                    forceX += (diffX / dist) * repelForce;
+                    forceY += (diffY / dist) * repelForce;
+                }
+                else if (dist <= 40)
+                {
+                    forceX += -1.5f * static_cast<float>(Randomizer(-1, 1));
+                    forceY += -1.5f * static_cast<float>(Randomizer(-1, 1));
+                }
+            }
+            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.008f);
+            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.04f);
             Entity.shooting_delay--;
         }
     }
+}
+
+void SpawnSparks()
+{
+
 }

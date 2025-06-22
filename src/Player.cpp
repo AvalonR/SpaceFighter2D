@@ -162,6 +162,7 @@ void Player::playerInput()
     if (isReloading == true && PlayerReloadingCooldown <= 0)
     {
         if (!Setup::is_Paused){
+            Sound::PlaySound(14);
             Setup::EntityList[0].BC += 0.1f;
             PlayerReloadingCooldown = static_cast<int>(72 * PlayerUpgrades.bulletCooldownMultiplier);
         }
