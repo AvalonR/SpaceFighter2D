@@ -24,6 +24,7 @@ class UI {
     static void RenderUI();
     static void PlayerStats();
     static void RestartRun();
+    static void NextLevelPopUp();
     static void Escape();
     static void ScoreBoard();
     static void Achievements();

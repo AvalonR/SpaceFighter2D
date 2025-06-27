@@ -62,8 +62,16 @@ void Loot::ParticleCreation(SDL_FPoint origin, SDL_Color color, int duration, in
         particle.x = origin.x;
         particle.y = origin.y;
         Vector velocity;
-        velocity.x = 0.2 * Enemy::Randomizer(-1, 1);
-        velocity.y = 0.2 * Enemy::Randomizer(-2, 0);
+        velocity.x = 0.2 * Enemy::Randomizer(-2, 2);
+        velocity.y = 0.2 * Enemy::Randomizer(-2, 1);
+        ParticleVector.emplace_back(particle, velocity, color, duration);
+    }
+}
+void Loot::InvariableParticleCreation(SDL_FPoint origin, Vector velocity, SDL_Color color, int duration, int quantity) {
+    for (int i = 0; i < quantity; i++)
+    {
+        particle.x = origin.x;
+        particle.y = origin.y;
         ParticleVector.emplace_back(particle, velocity, color, duration);
     }
 }

@@ -139,17 +139,21 @@ void Enemy::SpawnEnemy(int type)
     if (type == 2)
     {
         enemy.dstR.w = 84;
-        enemy.dstR.h = 64;
+        enemy.dstR.h = 58;
     }
     if (type == 3)
     {
         enemy.HP = 3.0f;
-        enemy.dstR.x = 200;
-        enemy.dstR.y = 200;
         enemy.dstR.w = 68 * 2;
         enemy.dstR.h = 98 * 2;
         enemy.rotation = 180;
         enemy.shooting_delay = 1200;
+    }
+    if (type == 4)
+    {
+        enemy.HP = 3.0f;
+        enemy.dstR.w = 62 * 2;
+        enemy.dstR.h = 85 * 2;
     }
 
     Setup::EntityList.emplace_back(enemy.HP, enemy.BC, type, enemy.x, enemy.y, type, enemy.srcR, enemy.dstR,
@@ -181,6 +185,11 @@ void Enemy::EnemyAI()
             {
                 a.h = a.h * 2;
                 a.w = a.w * 2;
+                for (auto& animation : TextureManager::animationsVec) {
+                    if (animation.AnimationNumber == 9 && animation.EUID == Entity.UID) {
+                        animation.expiration = -1;
+                    }
+                }
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 2, a, Entity.UID);
                 Setup::TargetScore += 20;
                 Sound::PlaySound(9);
@@ -191,7 +200,12 @@ void Enemy::EnemyAI()
             if (Entity.type == 2 && Entity.HP != -0.9999f)
             {
                 a.w = a.w * 1.2;
-                a.h = (a.h + 20) * 1.2;
+                a.h = a.h * 1.7;
+                for (auto& animation : TextureManager::animationsVec) {
+                    if (animation.AnimationNumber == 10 && animation.EUID == Entity.UID) {
+                        animation.expiration = -1;
+                    }
+                }
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a, Entity.UID);
                 Setup::TargetScore += 25;
                 Sound::PlaySound(9);
@@ -202,7 +216,12 @@ void Enemy::EnemyAI()
             if (Entity.type == 2 && Entity.HP == -0.9999f)
             {
                 a.w = a.w * 1.2;
-                a.h = (a.h + 20) * 1.2;
+                a.h = a.h * 1.7;
+                for (auto& animation : TextureManager::animationsVec) {
+                    if (animation.AnimationNumber == 10 && animation.EUID == Entity.UID) {
+                        animation.expiration = -1;
+                    }
+                }
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 0, a, Entity.UID);
             } 
             if (Entity.type == 3)
@@ -212,11 +231,30 @@ void Enemy::EnemyAI()
                 a.w = 256;
                 a.h = 256;
                 for (auto& animation : TextureManager::animationsVec) {
-                    if (animation.AnimationNumber == 4 && animation.EUID == Entity.UID || animation.AnimationNumber == 5 && animation.EUID == Entity.UID) {
+                    if (animation.AnimationNumber == 4 && animation.EUID == Entity.UID || animation.AnimationNumber == 5 && animation.EUID == Entity.UID || animation.AnimationNumber == 11 && animation.EUID == Entity.UID) {
                         animation.expiration = -1;
                     }
                 }
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 3, a, Entity.UID);
+                Sound::PlaySound(9);
+                Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
+                Setup::TargetScore += 250;
+                Player::enemies_killed++;
+                Player::bosses_killed++;
+                Loot::spawnCoins(coinrec, 100);
+            }
+            if (Entity.type == 4)
+            {
+                a.x = Entity.x;
+                a.y = Entity.y;
+                a.w = 256;
+                a.h = 256;
+                for (auto& animation : TextureManager::animationsVec) {
+                    if (animation.AnimationNumber == 7 && animation.EUID == Entity.UID || animation.AnimationNumber == 12 && animation.EUID == Entity.UID) {
+                        animation.expiration = -1;
+                    }
+                }
+                TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 6, a, Entity.UID);
                 Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
                 Setup::TargetScore += 250;
@@ -292,7 +330,7 @@ void Enemy::EnemyAI()
             if (Entity.shooting_delay <= 0)
             {
                 Bullet::spawnBulletEnemy({Entity.dest.x, Entity.dest.y}, {Entity.dest.w, Entity.dest.h},
-                                         Entity.rotation);
+                                         Entity.rotation, Entity.UID);
                 Entity.shooting_delay = 200;
             }
             else
@@ -482,7 +520,7 @@ void Enemy::EnemyAI()
                                 enemy.effectTimer = 15;
                                 Sound::PlaySound(12);
                                 SDL_FPoint spark = {LinesForChecking[i][1].x, LinesForChecking[i][1].y};
-                                Loot::ParticleCreation(spark, {255, 155, 0, 255}, 300, 2);
+                                Loot::ParticleCreation(spark, {255, 155, 0, 255}, 250, 2);
                                 hitSomething = true;
                                 break;
                             }
@@ -494,7 +532,7 @@ void Enemy::EnemyAI()
                     }
                 }
 
-                if (TextureManager::animationsVec[t].AnimationNumber == 5)
+                if (TextureManager::animationsVec[t].AnimationNumber == 5 && TextureManager::animationsVec[t].EUID == Entity.UID)
                 {
                     TextureManager::animationsVec[t].destRect.x = Entity.dest.x - Entity.dest.w / 2.3;
                     TextureManager::animationsVec[t].destRect.y = Entity.dest.y - Entity.dest.h / 5.8;
@@ -511,7 +549,44 @@ void Enemy::EnemyAI()
                 float diffY = Entity.y - OtherEnemy.y;
                 float dist = std::sqrt(diffX * diffX + diffY * diffY);
 
-                if (dist < 100 && dist > 40)
+                if (dist < 500 && dist > 230)
+                {
+                    float repelForce = 0.4f / dist;
+                    forceX += (diffX / dist) * repelForce * 4.0f;
+                }
+                else if (dist <= 230)
+                {
+                    forceX += -1.5f * static_cast<float>(Randomizer(-2, 2));
+                }
+            }
+            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.008f);
+            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.04f);
+            Entity.shooting_delay--;
+        }
+
+        if (Entity.type == 4) 
+        {
+            // Compute attraction to player
+            float dx = Setup::EntityList[0].dest.x - Entity.x;
+            float dy = Setup::EntityList[0].dest.y - Entity.y;
+            float distance = std::sqrt(dx * dx + dy * dy);
+
+            if (distance > radius)
+            {
+                forceX += (dx / distance) * 0.5f;
+                forceY += (dy / distance) * 0.5f;
+            }
+
+            // Repulsion from other enemies
+            for (auto& OtherEnemy : Setup::EntityList)
+            {
+                if (&Entity == &OtherEnemy) continue;
+
+                float diffX = Entity.x - OtherEnemy.x;
+                float diffY = Entity.y - OtherEnemy.y;
+                float dist = std::sqrt(diffX * diffX + diffY * diffY);
+
+                if (dist < 100 && dist > 40) // Smooth repulsion
                 {
                     float repelForce = 0.3f / dist;
                     forceX += (diffX / dist) * repelForce;
@@ -519,18 +594,75 @@ void Enemy::EnemyAI()
                 }
                 else if (dist <= 40)
                 {
+                    // Soft randomization to prevent stacking
                     forceX += -1.5f * static_cast<float>(Randomizer(-1, 1));
                     forceY += -1.5f * static_cast<float>(Randomizer(-1, 1));
                 }
             }
-            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.008f);
-            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.04f);
-            Entity.shooting_delay--;
+            float orbitDirection;
+            size_t index = &Entity - &Setup::EntityList[0];
+            if (index - 1 < enemyRotations.size())
+            {
+                orbitDirection = static_cast<float>(enemyRotations[index-1]);
+            }
+            else
+            {
+                std::cerr << "Index " << index << " out of bounds for enemyRotations (size: " << enemyRotations.size() << ")\n";
+                orbitDirection = static_cast<float>(60);
+            }
+
+            float angle = std::atan2(dy, dx);
+            float orbitForceX = std::sin(angle) * 0.5f * orbitDirection;
+            float orbitForceY = -std::cos(angle) * 0.5f * orbitDirection;
+
+            forceX += orbitForceX;
+            forceY += orbitForceY;
+
+            // Enemy Shooting
+            Entity.rotation = (std::atan2(dy, dx) * (180.0f / M_PI)) + 90;
+
+            if (Entity.shooting_delay <= 0)
+            {
+                SDL_FRect shipanim = {Entity.dest.x, Entity.dest.y, 256, 256};
+                TextureManager::animationsVec.emplace_back(0, 20, 400, Entity.rotation, 7, shipanim, Entity.UID);
+                double angleRad = (Entity.rotation - 90) * (M_PI / 180.0f);
+                for (int i = 0; i < 5; i++)
+                {
+                    Bullet::SpawnSpecificBulletEnemy(Entity.dest.x - 20 + Entity.dest.w / 2, Entity.dest.y + Entity.dest.h / 2, angleRad, angleRad, 15 * i, 0.1f, Entity.UID);
+                    Bullet::SpawnSpecificBulletEnemy(Entity.dest.x + 20 + Entity.dest.w / 2, Entity.dest.y + Entity.dest.h / 2, angleRad, angleRad, 15 * i, 0.1f, Entity.UID);
+                }   
+                Entity.shooting_delay = 700;
+            }
+            else
+            {
+                Entity.shooting_delay -= 1;
+            }
+
+            for (auto& animation : TextureManager::animationsVec) {
+                if (animation.AnimationNumber == 7 && animation.EUID == Entity.UID)
+                {
+                    float centerX = Entity.dest.x + Entity.dest.w / 2.0f;
+                    float centerY = Entity.dest.y + Entity.dest.h / 2.0f;
+                    // Offset from center to bottom-center
+                    float offsetX = 0.0f;
+                    float offsetY = Entity.dest.h / 11.0f; // push downward
+
+                    // Apply rotation
+                    float radians = Entity.rotation * M_PI / 180.0f;
+                    float rotatedX = std::cos(radians) * offsetX - std::sin(radians) * offsetY;
+                    float rotatedY = std::sin(radians) * offsetX + std::cos(radians) * offsetY;
+
+                    animation.destRect.x = centerX + rotatedX - animation.destRect.w / 2.0f;
+                    animation.destRect.y = centerY + rotatedY - animation.destRect.h / 2.0f;
+                    animation.angle = Entity.rotation;
+                    break;
+                }
+            }
+
+            // Apply forces using smooth interpolation
+            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.1f);
+            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.1f);
         }
     }
 }
 
-void SpawnSparks()
-{
-
-}

@@ -23,7 +23,7 @@ void Sound::Init()
     }
     Mix_AllocateChannels(96);
     Mix_Volume(-1, 40);
-    Mix_VolumeMusic(20);
+    Mix_VolumeMusic(40);
     LoadSound("playerlaserFO.wav");
     LoadSound("enemylaserFO.wav");
     LoadSound("shipexplosionFO.wav");

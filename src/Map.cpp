@@ -90,26 +90,26 @@ void Map::MapGeneration() {
     };
 
     std::map<int, int> levelMapIndices;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 16; i++) {
         levelMapIndices[i + 1] = Enemy::Randomizer(0, 5);
     }
 
     std::map<int, std::vector<WaveData>> levelWaves;
 
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 3; j++) {
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 4; j++) {
             WaveData newWave;
             std::vector<std::pair<int, int>> enemies;
-            if (i < 2) {
-                if (j < 2) {
+            if (i < 6) {
+                if (j < 3) {
                     enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
                     enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
                 } else {
                     enemies.emplace_back(3, 1);
                     enemies.emplace_back(Enemy::Randomizer(1, 2), 3 * Enemy::Randomizer(1, 3));
                 }
-            } else if (i < 4) {
-                if (j < 2) {
+            } else if (i < 10) {
+                if (j < 3) {
                     enemies.emplace_back(Enemy::Randomizer(1, 2), 2 *Enemy::Randomizer(1, 3));
                     enemies.emplace_back(Enemy::Randomizer(1, 2), 2 *Enemy::Randomizer(1, 3));
                 } else {
@@ -157,9 +157,9 @@ void Map::MapGeneration() {
 }
 void Map::MapUpdate()
 {
-    src->y = src->w = static_cast<float>(Setup::WindowWidth);
+    src->w = static_cast<float>(Setup::WindowWidth);
     src->h = static_cast<float>(Setup::WindowHeight);
-    float x_right = 600, y_bottom = 0;
+    float x_right = 600, y_bottom = 120;
 
     src->x = lerp(src->x, Setup::EntityList[0].dest.x - x_right, 0.05f);
     src->y = lerp(src->y, Setup::EntityList[0].dest.y - y_bottom, 0.05f);

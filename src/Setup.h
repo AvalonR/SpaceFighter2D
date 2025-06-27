@@ -61,7 +61,7 @@ public:
     static std::mt19937 rng;
     static std::unordered_set<uint32_t> usedIDs;
     static uint32_t generateID(int TypeID);
-
+    static void RandomizeMusic();
     static void initialization();
     static void gameLoop();
     static void restart();

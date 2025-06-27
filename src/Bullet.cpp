@@ -25,7 +25,7 @@ Bullet::Bullet()
     dstR = new SDL_FRect{0, 0, 64, 64};
     rotation = 0;
     velocity = {0, 0};
-    owner = -1;
+    owner = 0;
     damage = 0;
 }
 
@@ -51,7 +51,7 @@ void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY, doubl
         }
         else
         {
-            bullet.owner = 0;
+            bullet.owner = Setup::EntityList[0].UID;
             bullet.damage = damage + Player::PlayerUpgrades.damagePerBullet;
             if (delayMS > 0) {
                 ScheduledBulletList.emplace_back(std::pair<Bullet, int>(bullet, delayMS));
@@ -110,7 +110,7 @@ void Bullet::spawnBulletPlayer()
     }
 }
 
-void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation)
+void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation, uint32_t EUID)
 {
     Bullet bullet;
 
@@ -136,9 +136,40 @@ void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double
     }
     else
     {
-        bullet.owner = 1;
+        bullet.owner = EUID;
         bullet.damage = (0.05f * Setup::Difficulty);
         BulletList.emplace_back(bullet);
+        Sound::PlaySound(1);
+    }
+}
+
+void Bullet::SpawnSpecificBulletEnemy(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID) {
+    float spawnDistance = 100.0f;  
+    Bullet bullet;
+    bullet.dstR->x = entityCenterX + cos(angleRad) * spawnDistance - bullet.dstR->w / 2;
+    bullet.dstR->y = entityCenterY + sin(angleRad) * spawnDistance - bullet.dstR->h / 2;
+    bullet.dstR->w = bullet.dstR->h = 64;
+
+    bullet.x = bullet.dstR->x;
+    bullet.y = bullet.dstR->y;
+
+    // Calculate velocity components based on rotation
+    bullet.velocity.x = bulletSpeed * std::cos(angleRadians);
+    bullet.velocity.y = bulletSpeed * std::sin(angleRadians);
+    if (bullet.dstR->x < -100 || bullet.dstR->y < -100 || bullet.dstR->x > 2020 || bullet.dstR->y > 1920)
+    {
+        // SDL_Log("Error: Bullet spawned with invalid coordinates!");
+    }
+    else
+    {
+        bullet.owner = EUID;
+        bullet.damage = (damage * Setup::Difficulty);
+        if (delayMS > 0) {
+            ScheduledBulletList.emplace_back(std::pair<Bullet, int>(bullet, delayMS));
+        }
+        else {
+            BulletList.emplace_back(bullet);
+        }
         Sound::PlaySound(1);
     }
 }
@@ -170,12 +201,12 @@ void Bullet::updateBullets()
                                index++;
                                SDL_FRect EntitycollisionRect = {Entity.dest.x * 1.01f, Entity.dest.y * 1.01f, Entity.dest.w * 0.95f,Entity.dest.w * 0.95f};
                                SDL_FRect BulletcollisionRect = {bullet.dstR->x * 1.05f, bullet.dstR->y * 1.05f, bullet.dstR->w * 0.5f,bullet.dstR->w * 0.5f};
-                               if (SDL_GetRectIntersectionFloat(&BulletcollisionRect, &EntitycollisionRect, &BulletParticle) && bullet.owner != Entity.type)
+                               if (SDL_GetRectIntersectionFloat(&BulletcollisionRect, &EntitycollisionRect, &BulletParticle) && bullet.owner != Entity.UID)
                                {
                                    Entity.HP -= bullet.damage;
                                    Entity.effectTimer = 25;
                                    Sound::PlaySound(3);
-                                    if (bullet.owner == 0) {
+                                    if (bullet.owner == Setup::EntityList[0].UID) {
                                         Player::shots_landed++;
                                     }
                                    if (Entity.type == 0)

@@ -139,7 +139,9 @@ int healingcooldown = 144;
 void Player::playerInput()
 {
     if (PlayerUpgrades.ExperienceP == 1.0f) {
-        Sound::PlaySound(10);
+        if (UI::UIAction != 5) {
+            Sound::PlaySound(10);
+        }
         UI::UIAction = 5;
         UI::CurrentLayer = 4;
         Setup::is_Paused = true;
@@ -290,20 +292,5 @@ void Player::playerInput()
         if (keyState[SDLK_S]) { Setup::EntityList[0].velocity.y += 1.0f; UI::ControlsPressed[4] = true;}// Move down
         if (keyState[SDLK_A]) { Setup::EntityList[0].velocity.x -= 1.0f; UI::ControlsPressed[3] = true;}// Move left
         if (keyState[SDLK_D]) { Setup::EntityList[0].velocity.x += 1.0f; UI::ControlsPressed[5] = true;}// Move right
-        Setup::EntityList[0].x = std::clamp(Setup::EntityList[0].x, 0.0f,
-                                            Setup::WindowWidth - Setup::EntityList[0].dest.w);
-        Setup::EntityList[0].y = std::clamp(Setup::EntityList[0].y, 0.0f,
-                                            Setup::WindowHeight - Setup::EntityList[0].dest.h);
-        // Apply friction to prevent infinite bouncing
-        Setup::EntityList[0].velocity.x *= 0.9f;
-        Setup::EntityList[0].velocity.y *= 0.9f;
-
-        // Update SDL Rect position
-        Setup::EntityList[0].dest.x = Setup::EntityList[0].x;
-        Setup::EntityList[0].dest.y = Setup::EntityList[0].y;
-        Setup::EntityList[0].dest.x = std::clamp(Setup::EntityList[0].dest.x, 0.0f,
-                                                 Setup::WindowWidth - Setup::EntityList[0].dest.w);
-        Setup::EntityList[0].dest.y = std::clamp(Setup::EntityList[0].dest.y, 0.0f,
-                                                 Setup::WindowHeight - Setup::EntityList[0].dest.h);
     }
 }

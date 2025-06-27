@@ -65,6 +65,25 @@ uint32_t Setup::generateID(int TypeID) {
     return id;
 }
 
+void Setup::RandomizeMusic() {
+    int music = Enemy::Randomizer(1, 4);
+    if (music == 1)
+    {
+        Sound::PlayMusic("space-158081.mp3", 0);
+    }
+    if (music == 2)
+    {
+        Sound::PlayMusic("Aylex-AI.mp3", 0);
+    }
+    if (music == 3)
+    {
+        Sound::PlayMusic("Aylex-FF.mp3", 0);
+    }
+    if (music == 4)
+    {
+        Sound::PlayMusic("ocean-wave-ambient.mp3", 0);
+    }
+}
 void Setup::initialization()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
@@ -113,7 +132,7 @@ void Setup::initialization()
     }
     UI::Init();
     Sound::Init();
-    Sound::PlayMusic("space-158081.mp3", 0);
+    RandomizeMusic();
     //Loading animations
     IMG_Animation* explosion = TextureManager::LoadAnimation("explosion.gif");
     IMG_Animation* deathAnimationSuicide = TextureManager::LoadAnimation("torpedodest.gif");
@@ -121,25 +140,32 @@ void Setup::initialization()
     IMG_Animation* deathAnimationDreadnought = TextureManager::LoadAnimation("dreadnoughtdest.gif");
     IMG_Animation* fullbeam = TextureManager::LoadAnimation("fullbeam.gif");
     IMG_Animation* dreadnoughtweapon = TextureManager::LoadAnimation("dreadnoughtlaser.gif");
+    IMG_Animation* deathAnimationBattlecruiser = TextureManager::LoadAnimation("NairanBattlecruiserDestruction.gif");
+    IMG_Animation* battlecruiserweapon = TextureManager::LoadAnimation("NairanBattlecruiserWeapons.gif");
     IMG_Animation* enginesPlayer = TextureManager::LoadAnimation("enginesPlayer.gif");
     IMG_Animation* enginesBomber = TextureManager::LoadAnimation("enginesBomber.gif");
     IMG_Animation* enginesTorpedo = TextureManager::LoadAnimation("enginesTorpedo.gif");
     IMG_Animation* enginesDreadnought = TextureManager::LoadAnimation("enginesDreadnought.gif");
+    IMG_Animation* enginesBattlecruiser = TextureManager::LoadAnimation("enginesBattlecruiser.gif");
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationSuicide);
     TextureManager::ImgAnimationsVec.emplace_back(explosion);
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationBomber);
     TextureManager::ImgAnimationsVec.emplace_back(deathAnimationDreadnought);
     TextureManager::ImgAnimationsVec.emplace_back(fullbeam);
     TextureManager::ImgAnimationsVec.emplace_back(dreadnoughtweapon);
+    TextureManager::ImgAnimationsVec.emplace_back(deathAnimationBattlecruiser);
+    TextureManager::ImgAnimationsVec.emplace_back(battlecruiserweapon);
     TextureManager::ImgAnimationsVec.emplace_back(enginesPlayer);
     TextureManager::ImgAnimationsVec.emplace_back(enginesBomber);
     TextureManager::ImgAnimationsVec.emplace_back(enginesTorpedo);
     TextureManager::ImgAnimationsVec.emplace_back(enginesDreadnought);
+    TextureManager::ImgAnimationsVec.emplace_back(enginesBattlecruiser);
     //Loading ship textures
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("trimmed_playership.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("trimmed_bomber.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("trimmed_torpedo.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("tdreadnought.png"));
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("tBattlecruiser.png"));
     //Loading icons
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_01.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_02.png"));
@@ -160,7 +186,7 @@ void Setup::initialization()
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_33.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_36.png")); 
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_27.png")); 
-    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_34.png")); //element -> 23
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_34.png")); //element -> 24
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_e.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_e_outline.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_q.png"));
@@ -175,7 +201,8 @@ void Setup::initialization()
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_a_outline.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_d.png"));
     TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_d_outline.png"));
-    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/mouse_move.png")); //element -> 38
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/mouse_move.png")); //element -> 39
+    TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/Skillicon_06.png")); //element -> 40
     //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_all.png"));
     //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_all.png"));
     //TextureManager::TextureVec.emplace_back(TextureManager::LoadTexture("icons/keyboard_arrows_down.png"));
@@ -249,7 +276,6 @@ void Setup::restart()
         Map::MapGeneration();
         CurrentLevel = 1;
         Map::NewMap(CurrentLevel);
-
     }
 }
 void Setup::nextLevel()
@@ -265,7 +291,7 @@ void Setup::nextLevel()
     UI::Store();
     Map::MapGeneration();
     CurrentLevel++;
-    if (CurrentLevel > 6) {
+    if (CurrentLevel > 16) {
         Restart = true;
         Sound::PlaySound(11);
         restart();
@@ -289,18 +315,20 @@ void Setup::update()
         Sound::PAndUNP_SoundEffects(false);
         Player::AchievementLogging();
         Sound::VolumeAdjustment();
-        /*
-        is_Paused = true;
-        UI::CurrentLayer = 4;
-        UI::UIAction = 4;
-        UI::Store();
-        */
+        // is_Paused = true;
+        // UI::CurrentLayer = 4;
+        // UI::UIAction = 4;
+        // UI::Store();
         Enemy::SwarmingScenario();
         for (auto& Entity : Setup::EntityList)
         {
             if (Entity.type == 0) {
                 Entity.x += Entity.velocity.x * (speed * Player::PlayerUpgrades.MovementSpeed);
                 Entity.y += Entity.velocity.y * (speed * Player::PlayerUpgrades.MovementSpeed);
+
+                Entity.x = std::clamp(Entity.x, 0.0f, WindowWidth - Entity.dest.w);
+                Entity.y = std::clamp(Entity.y, 0.0f, WindowHeight - Entity.dest.h);
+
                 Entity.dest.x = Entity.x;
                 Entity.dest.y = Entity.y;
             }
@@ -317,24 +345,51 @@ void Setup::update()
             if (Entity.velocity.x != 0.0f || Entity.velocity.y != 0.0f) {
                 bool found = false;
 
+                SDL_FRect a = Entity.dest;
+                float centerX = a.x + a.w / 2.0f;
+                float centerY = a.y + a.h / 2.0f;
+                if (Entity.type == 0) {
+                    a.h = a.h * 1.6;
+                    a.w = a.w * 1.6;
+                }
+                if (Entity.type == 1) {
+                    a.h = a.h * 2.0;
+                    a.w = a.w * 2.0;
+                }
+                if (Entity.type == 2) {
+                    a.w = a.w * 1.1;
+                    a.h = a.h * 1.8;
+                }
+                if (Entity.type == 3) {
+                    a.h = a.h * 1.5;
+                    a.w = a.w * 1.9;
+                }
+                if (Entity.type == 4) {
+                    a.h = a.h * 1.9;
+                    a.w = a.w * 2.1;
+                }
+                a.x = centerX - a.w / 2.0f;
+                a.y = centerY - a.h / 2.0f;
                 for (auto& animation : TextureManager::animationsVec) {
-                    if (animation.AnimationNumber == 6 + Entity.type && animation.EUID == Entity.UID) {
-                        SDL_FRect bigger = Entity.dest;
-                        bigger.h += 10;
-                        animation.destRect = bigger;
+                    if (animation.AnimationNumber == 8 + Entity.type && animation.EUID == Entity.UID) {
+                        animation.destRect = a;
                         animation.angle = Entity.rotation;
                         found = true;
                         break; 
                     }
                 }
+
                 if (!found) {
-                    TextureManager::animationsVec.emplace_back(0, 10, 200, Entity.rotation, 6 + Entity.type, Entity.dest, Entity.UID);
+                    TextureManager::animationsVec.emplace_back( 0, 10, 300, Entity.rotation, 8 + Entity.type, a, Entity.UID);
                 }
             } else {
-            // Entity is idle — optionally remove its movement animation
-                TextureManager::animationsVec.erase(std::remove_if(TextureManager::animationsVec.begin(), TextureManager::animationsVec.end(), [&](AnimationVector& anim) {
-                    return anim.AnimationNumber == 7 + Entity.type && anim.EUID == Entity.UID;
-                    }), TextureManager::animationsVec.end());
+                TextureManager::animationsVec.erase(
+                    std::remove_if(TextureManager::animationsVec.begin(), TextureManager::animationsVec.end(),
+                        [&](const AnimationVector& anim) {
+                            return anim.AnimationNumber == 8 + Entity.type && anim.EUID == Entity.UID;
+                        }),
+                    TextureManager::animationsVec.end()
+                );
             }
         }
         Loot::UpdateCoins();
@@ -349,6 +404,12 @@ void Setup::render()
 {
     SDL_RenderClear(renderer);
     Map::MapRender();
+    for (auto& animation : TextureManager::animationsVec)
+    {
+        if (animation.AnimationNumber >= 8) {
+            TextureManager::DrawAnimation(animation, false);
+        }
+    }
     for (auto &Entity : EntityList)
     {
         if (Entity.TextureID >= 0 && Entity.TextureID < TextureManager::TextureVec.size()) {
@@ -368,6 +429,9 @@ void Setup::render()
     }
     for (auto& animation : TextureManager::animationsVec)
     {
+        if (animation.AnimationNumber >= 8) {
+            continue;
+        }
         bool colorMod = false;
         for (auto& Entity : EntityList) {
             if (animation.AnimationNumber == 5 && Entity.type == 3 && Entity.effectTimer > 0) {

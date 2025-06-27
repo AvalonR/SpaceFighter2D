@@ -24,6 +24,7 @@ public:
     static void spawnCoins(SDL_FRect position, int amount);  
     static void UpdateCoins();
     static void ParticleCreation(SDL_FPoint origin, SDL_Color color, int duration, int quantity);
+    static void InvariableParticleCreation(SDL_FPoint origin, Vector velocity, SDL_Color color, int duration, int quantity);
     static void UpdateParticles();
 };
 

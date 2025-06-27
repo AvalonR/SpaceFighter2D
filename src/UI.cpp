@@ -28,6 +28,8 @@ int buttonCooldown = 0;
 int UI::Scrolling = 0;
 bool UI::ControlsPressed[7];
 
+int LevelPopUp = -1;
+
 void UI::Init()
 {
     UITexture = SDL_CreateTexture(Setup::renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 1920, 1080);
@@ -93,6 +95,7 @@ void UI::RenderUI()
             if (Button({855, 500, 180, 35}, {138, 43, 226, 180}, "Swarm Mode", {860, 500}, 24))
             {
                 CurrentMenu = "Swarm_Mode";
+                LevelPopUp++;
             }
             if (Setup::Score > 0)
             {
@@ -101,6 +104,7 @@ void UI::RenderUI()
                     Enemy::RestartWaves();
                     Setup::Restart = true;
                     CurrentMenu = "Swarm_Mode";
+                    LevelPopUp++;
                 }
             }
             if (Button({855, 920, 180, 35}, {138, 43, 226, 180}, "Quit", {860, 920}, 24))
@@ -132,52 +136,56 @@ void UI::RenderUI()
             }
             SDL_FRect Buttons = {1600, 880, 64, 64};
             if (ControlsPressed[0] ) {
-                TextureManager::DrawTextureNP(26, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(27, Setup::renderer, &Buttons, 0); 
             }
             else {
-                TextureManager::DrawTextureNP(27, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(28, Setup::renderer, &Buttons, 0); 
             }
             Buttons = {1660, 880, 64, 64};
             if (ControlsPressed[1]) {
-                TextureManager::DrawTextureNP(30, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(31, Setup::renderer, &Buttons, 0); 
             }
             else {
-                TextureManager::DrawTextureNP(31, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(32, Setup::renderer, &Buttons, 0); 
             }
             Buttons = {1720, 880, 64, 64};
             if (ControlsPressed[2]) {
-                TextureManager::DrawTextureNP(24, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(25, Setup::renderer, &Buttons, 0); 
             }
             else {
-                TextureManager::DrawTextureNP(25, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(26, Setup::renderer, &Buttons, 0); 
             }
             Buttons = {1610, 940, 64, 64};
             if (ControlsPressed[3]) {
-                TextureManager::DrawTextureNP(34, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(35, Setup::renderer, &Buttons, 0); 
             }
             else {
-                TextureManager::DrawTextureNP(35, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(36, Setup::renderer, &Buttons, 0); 
             }
             Buttons = {1670, 940, 64, 64};
             if (ControlsPressed[4]) {
-                TextureManager::DrawTextureNP(32, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(33, Setup::renderer, &Buttons, 0); 
             }
             else {
-                TextureManager::DrawTextureNP(33, Setup::renderer, &Buttons, 0); 
+                TextureManager::DrawTextureNP(34, Setup::renderer, &Buttons, 0); 
             }
             Buttons = {1730, 940, 64, 64};
             if (ControlsPressed[5]) {
-                TextureManager::DrawTextureNP(36, Setup::renderer, &Buttons, 0); 
-            }
-            else {
                 TextureManager::DrawTextureNP(37, Setup::renderer, &Buttons, 0); 
             }
+            else {
+                TextureManager::DrawTextureNP(38, Setup::renderer, &Buttons, 0); 
+            }
             Buttons = {1810, 910, 64, 64};
-            TextureManager::DrawTextureNP(38, Setup::renderer, &Buttons, 0); 
+            TextureManager::DrawTextureNP(39, Setup::renderer, &Buttons, 0); 
         }
         if (std::strcmp(CurrentMenu, "Swarm_Mode") == 0)
         {
             PlayerStats();
+            if (LevelPopUp >= 0)
+            {
+                NextLevelPopUp();
+            }
             if (UIAction == 2)
             {
                 CurrentLayer = 4;
@@ -282,9 +290,9 @@ void UI::PlayerStats()
 
     SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
     SDL_FRect HPIcon = {230, 1032, 32, 32};
-    TextureManager::DrawTextureNP(20, Setup::renderer, &HPIcon, 0); 
+    TextureManager::DrawTextureNP(21, Setup::renderer, &HPIcon, 0); 
     SDL_FRect BCIcon = {1662, 1032, 32, 32};
-    TextureManager::DrawTextureNP(11, Setup::renderer, &BCIcon, 0); 
+    TextureManager::DrawTextureNP(12, Setup::renderer, &BCIcon, 0); 
 }
 
 bool video_settings = false;
@@ -300,6 +308,7 @@ void UI::RestartRun()
     SDL_RenderRect(Setup::renderer, &RestartOutline);
     if (Button({865, 450, 155, 35}, {138, 43, 226, 180}, "Restart", {870, 450}, 24))
     {
+        Setup::RandomizeMusic();
         Setup::Restart = true;
         UIAction = 0;
         CurrentLayer = 1;
@@ -311,6 +320,23 @@ void UI::RestartRun()
         CurrentLayer = 1;
         CurrentMenu = "Main_Menu";
     }
+}
+
+void UI::NextLevelPopUp()
+{
+    if (LevelPopUp >= 250)
+    {
+        LevelPopUp = -1;
+        return;
+    }
+    LevelPopUp++;
+    SDL_FRect PopUPOutline = {700, 440, 500, 120};
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 250 - LevelPopUp);
+    SDL_RenderFillRect(Setup::renderer, &PopUPOutline);
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 255, 255, 255 - LevelPopUp);
+    SDL_RenderRect(Setup::renderer, &PopUPOutline);
+    std::string text = "Current Level: " + std::to_string(Setup::CurrentLevel);
+    TextManager::RenderText(text.c_str(), {820, 480}, {255, 255, 255, static_cast<Uint8>(255 - LevelPopUp)}, 28);
 }
 void UI::Achievements() {
     const int entryHeight = 60;
@@ -326,14 +352,18 @@ void UI::Achievements() {
 
     int maxScroll = std::max(0, (totalEntries - maxVisibleEntries) * entryHeight);
     Scrolling = std::clamp(Scrolling, 0, maxScroll);
+    SDL_FRect rectAround = {590, 300, 750, 55};
     for (int i = firstIndex; i < lastIndex; i++) {
         float yOffset = 350.0f - (Scrolling % entryHeight) + ((i - firstIndex) * entryHeight);
+        rectAround.y = yOffset;
 
         if (Player::Achievements[i].achieved) {
+            SDL_RenderRect(Setup::renderer, &rectAround);
             std::string score = std::to_string(i + 1) + " " + Player::Achievements[i].title;
             TextManager::RenderText(score.c_str(), {600, yOffset}, {255, 255, 255, 255}, 24);
-            TextManager::RenderText(Player::Achievements[i].description.c_str(), {600, yOffset + 30}, {255, 255, 255, 255}, 24);
+            TextManager::RenderText(Player::Achievements[i].description.c_str(), {600, yOffset + 25}, {255, 255, 255, 255}, 24);
         } else {
+            SDL_RenderRect(Setup::renderer, &rectAround);
             std::string questionedTitle(Player::Achievements[i].title.length(), '?');
             std::string score = std::to_string(i + 1) + " " + questionedTitle;
             TextManager::RenderText(score.c_str(), {600, yOffset}, {255, 255, 255, 255}, 24);
@@ -402,101 +432,156 @@ void UI::ScoreBoard() {
 }
 void UI::Store() {
     SDL_FRect StoreOutline = {500, 300, 900, 500};
-    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 180);
     SDL_RenderFillRect(Setup::renderer, &StoreOutline);
     SDL_SetRenderDrawColor(Setup::renderer, 255, 255, 255, 255);
     SDL_RenderRect(Setup::renderer, &StoreOutline);
-    if (Button({550, 350, 180, 165}, {255, 255, 255, 100}, "Heal +20 Health" , {555, 470}, 16) && Setup::TargetCoins >= 80)
-    {
-        Setup::TargetCoins -= 80;
-        Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
 
-    }
     SDL_FRect BCIcon = {580, 340, 128, 128};
-    TextureManager::DrawTextureNP(8, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 80) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {550, 470}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({550, 350, 180, 165}, {255, 255, 255, 100}, "Heal +20 Health" , {555, 470}, 16))
+        {
+            Setup::TargetCoins -= 80;
+            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
+
+        }
+        TextureManager::DrawTextureNP(9, Setup::renderer, &BCIcon, 0); 
+    }
     TextManager::RenderText("Price: 80", {550, 350}, {255, 50, 50, 255}, 14);
-    if (Button({760, 350, 180, 165}, {255, 255, 255, 100}, "Increase Max", {765, 470}, 16) && Setup::TargetCoins >= 100)
-    {
-        Setup::TargetCoins -= 100;
-        Player::PlayerUpgrades.bonusTotalHP += 0.2f;
-        Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
-    }
-    TextManager::RenderText("Health +20", {765, 490}, {255, 255, 255, 255}, 16);
+
     BCIcon = {790, 340, 128, 128};
-    TextureManager::DrawTextureNP(14, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 100) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {760, 470}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({760, 350, 180, 165}, {255, 255, 255, 100}, "Increase Max", {765, 470}, 16))
+        {
+            Setup::TargetCoins -= 100;
+            Player::PlayerUpgrades.bonusTotalHP += 0.2f;
+            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
+        }
+        TextManager::RenderText("Health +20", {765, 490}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(15, Setup::renderer, &BCIcon, 0); 
+    }
     TextManager::RenderText("Price: 100", {760, 350}, {255, 50, 50, 255}, 14);
-    if (Button({970, 350, 180, 165}, {255, 255, 255, 100}, "Boost Max", {975, 470}, 16) && Setup::TargetCoins >= 100)
-    {
-        Setup::TargetCoins -= 100;
-        Player::PlayerUpgrades.extraBulletCap += 0.2f;
-        Setup::EntityList[0].BC = std::min(Setup::EntityList[0].BC + 0.2f, 1.0f + Player::PlayerUpgrades.extraBulletCap);
-    }
-    TextManager::RenderText("Ammo +20", {975, 490}, {255, 255, 255, 255}, 16);
+
     BCIcon = {1000, 340, 128, 128};
-    TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 80) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {970, 470}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({970, 350, 180, 165}, {255, 255, 255, 100}, "Boost Max", {975, 470}, 16))
+        {
+            Setup::TargetCoins -= 80;
+            Player::PlayerUpgrades.extraBulletCap += 0.2f;
+            Setup::EntityList[0].BC = std::min(Setup::EntityList[0].BC + 0.2f, 1.0f + Player::PlayerUpgrades.extraBulletCap);
+        }
+        TextManager::RenderText("Ammo +20", {975, 490}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(19, Setup::renderer, &BCIcon, 0); 
+    }
     TextManager::RenderText("Price: 80", {970, 350}, {255, 50, 50, 255}, 14);
-    if (Button({1180, 350, 180, 165}, {255, 255, 255, 100}, "Upgrade Bullet", {1185, 470}, 16) && Setup::TargetCoins >= 150)
-    {
-        Setup::TargetCoins -= 150;
-        Player::PlayerUpgrades.damagePerBullet += 0.05f;
-    }
-    TextManager::RenderText("Damage +5", {1185, 490}, {255, 255, 255, 255}, 16);
+
     BCIcon = {1210, 340, 128, 128};
-    TextureManager::DrawTextureNP(16, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 150) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {1185, 470}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({1180, 350, 180, 165}, {255, 255, 255, 100}, "Upgrade Bullet", {1185, 470}, 16))
+        {
+            Setup::TargetCoins -= 150;
+            Player::PlayerUpgrades.damagePerBullet += 0.05f;
+        }
+        TextManager::RenderText("Damage +5", {1185, 490}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(17, Setup::renderer, &BCIcon, 0); 
+    }
     TextManager::RenderText("Price: 150", {1180, 350}, {255, 50, 50, 255}, 14);
-    if (Button({550, 554, 180, 165}, {255, 255, 255, 100}, "Multi-Shot:", {555, 660}, 16) && Setup::TargetCoins >= 200)
-    {
-        Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 200;
-        Player::PlayerUpgrades.extraBulletsPerShot += 1;
-    }
-    TextManager::RenderText("+1 Bullet", {555, 680}, {255, 255, 255, 255}, 16);
+
     BCIcon = {580, 544, 128, 128};
-    TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0); 
-    BCIcon = {595, 595, 32, 32};
-    TextureManager::DrawTextureNP(8, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 200) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {550, 674}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({550, 554, 180, 165}, {255, 255, 255, 100}, "Multi-Shot:", {555, 660}, 16))
+        {
+            Player::upgradedPlayer = true;
+            Setup::TargetCoins -= 200;
+            Player::PlayerUpgrades.extraBulletsPerShot += 1;
+        }
+        TextManager::RenderText("+1 Bullet", {555, 680}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(19, Setup::renderer, &BCIcon, 0); 
+        BCIcon = {595, 595, 32, 32};
+        TextureManager::DrawTextureNP(9, Setup::renderer, &BCIcon, 0); 
+    }
     TextManager::RenderText("Price: 200", {550, 554}, {255, 50, 50, 255}, 14);
-    if (Button({760, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Shotgun", {765, 660}, 16) && Setup::TargetCoins >= 300 && !Player::PlayerUpgrades.firemodes[0])
-    {
-        Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 300;
-        Player::PlayerUpgrades.firemodes[0] = true;
-    }
-    TextManager::RenderText("Spread", {765, 680}, {255, 255, 255, 255}, 16);
+
     BCIcon = {790, 544, 128, 128};
-    TextureManager::DrawTextureNP(17, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 300 || Player::PlayerUpgrades.firemodes[0]) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {760, 674}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({760, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Shotgun", {765, 660}, 16))
+        {
+            Player::upgradedPlayer = true;
+            Setup::TargetCoins -= 300;
+            Player::PlayerUpgrades.firemodes[0] = true;
+        }
+        TextManager::RenderText("Spread", {765, 680}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0); 
+    }   
     TextManager::RenderText("Price: 300", {760, 554}, {255, 50, 50, 255}, 14);
-    if (Button({970, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Radial Fire", {975, 660}, 16) && Setup::TargetCoins >= 300 && !Player::PlayerUpgrades.firemodes[1])
-    {
-        Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 300;
-        Player::PlayerUpgrades.firemodes[1] = true;
-    }
+
     BCIcon = {1000, 544, 128, 128};
-    TextureManager::DrawTextureNP(15, Setup::renderer, &BCIcon, 0); 
-    TextManager::RenderText("Price: 300", {970, 554}, {255, 50, 50, 255}, 14);
-    if (Button({1180, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Parallel", {1185, 660}, 16) && Setup::TargetCoins >= 300 && !Player::PlayerUpgrades.firemodes[2])
-    {
-        Player::upgradedPlayer = true;
-        Setup::TargetCoins -= 300;
-        Player::PlayerUpgrades.firemodes[2] = true;
+    if (Setup::TargetCoins < 300 || Player::PlayerUpgrades.firemodes[1]) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {970, 674}, {255, 255, 255, 255}, 16);
     }
-    TextManager::RenderText("Fire", {1185, 680}, {255, 255, 255, 255}, 16);
+    else {
+        if (Button({970, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Radial Fire", {975, 660}, 16))
+        {
+            Player::upgradedPlayer = true;
+            Setup::TargetCoins -= 300;
+            Player::PlayerUpgrades.firemodes[1] = true;
+        }
+        TextureManager::DrawTextureNP(16, Setup::renderer, &BCIcon, 0); 
+    }
+    TextManager::RenderText("Price: 300", {970, 554}, {255, 50, 50, 255}, 14);
+
     BCIcon = {1210, 544, 128, 128};
-    TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0);
-    BCIcon = {1210, 544, 128, 128};
-    TextureManager::DrawTextureNP(18, Setup::renderer, &BCIcon, 0); 
+    if (Setup::TargetCoins < 300 || Player::PlayerUpgrades.firemodes[2]) {
+        TextureManager::DrawTextureNP(40, Setup::renderer, &BCIcon, 0); 
+        TextManager::RenderText("Unavailable", {1180, 674}, {255, 255, 255, 255}, 16);
+    }
+    else {
+        if (Button({1180, 554, 180, 165}, {255, 255, 255, 100}, "Unlock Parallel", {1185, 660}, 16))
+        {
+            Player::upgradedPlayer = true;
+            Setup::TargetCoins -= 300;
+            Player::PlayerUpgrades.firemodes[2] = true;
+        }
+        TextManager::RenderText("Fire", {1185, 680}, {255, 255, 255, 255}, 16);
+        TextureManager::DrawTextureNP(19, Setup::renderer, &BCIcon, 0);
+    }
     TextManager::RenderText("Price: 300", {1180, 554}, {255, 50, 50, 255}, 14);
     if (Button({1200, 740, 150, 35}, {255, 140, 66, 180}, "Next Level", {1205, 740}, 24))
     {
         Setup::is_Paused = false;
         UIAction = 0;
         CurrentLayer = 1;
+        NextLevelPopUp();
     }
 }
 void UI::LevelUp() {
     SDL_FRect LevelOutline = {500, 300, 900, 500};
-    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 180);
     SDL_RenderFillRect(Setup::renderer, &LevelOutline);
     SDL_SetRenderDrawColor(Setup::renderer, 255, 255, 255, 255);
     SDL_RenderRect(Setup::renderer, &LevelOutline);
@@ -513,7 +598,7 @@ void UI::LevelUp() {
     TextManager::RenderText("Bullet Cooldown", {555, 610}, {255, 255, 255, 255}, 16);
     TextManager::RenderText("-20%", {555, 630}, {255, 255, 255, 255}, 16);
     SDL_FRect BCIcon = {580, 420, 128, 128};
-    TextureManager::DrawTextureNP(12, Setup::renderer, &BCIcon, 0); 
+    TextureManager::DrawTextureNP(13, Setup::renderer, &BCIcon, 0); 
     if (Button({760, 400, 180, 260}, {255, 255, 255, 100}, "Sharpened Aim", {765, 550}, 18))
     {
         Setup::is_Paused = false;
@@ -526,7 +611,7 @@ void UI::LevelUp() {
     TextManager::RenderText("Bullet Damage", {765, 590}, {255, 255, 255, 255}, 16);
     TextManager::RenderText("+15%", {765, 610}, {255, 255, 255, 255}, 16);
     BCIcon = {790, 420, 128, 128};
-    TextureManager::DrawTextureNP(16, Setup::renderer, &BCIcon, 0); 
+    TextureManager::DrawTextureNP(17, Setup::renderer, &BCIcon, 0); 
     if (Button({970, 400, 180, 260}, {255, 255, 255, 100}, "Efficient Repair", {975, 550}, 18))
     {
         Setup::is_Paused = false;
@@ -539,7 +624,7 @@ void UI::LevelUp() {
     TextManager::RenderText("Slight Passive", {975, 590}, {255, 255, 255, 255}, 16);
     TextManager::RenderText("HP Regen +1%", {975, 610}, {255, 255, 255, 255}, 16);
     BCIcon = {1000, 420, 128, 128};
-    TextureManager::DrawTextureNP(22, Setup::renderer, &BCIcon, 0); 
+    TextureManager::DrawTextureNP(23, Setup::renderer, &BCIcon, 0); 
     if (Button({1180, 400, 180, 260}, {255, 255, 255, 100}, "Thruster", {1185, 550}, 18))
     {
         Setup::is_Paused = false;
@@ -553,7 +638,7 @@ void UI::LevelUp() {
     TextManager::RenderText("Movement Speed", {1185, 610}, {255, 255, 255, 255}, 16);
     TextManager::RenderText("+10%", {1185, 630}, {255, 255, 255, 255}, 16);
     BCIcon = {1210, 420, 128, 128};
-    TextureManager::DrawTextureNP(19, Setup::renderer, &BCIcon, 0); 
+    TextureManager::DrawTextureNP(20, Setup::renderer, &BCIcon, 0); 
 
 }
 void UI::Escape()
@@ -690,6 +775,13 @@ bool LayerValidation(const char* ButtonName)
 
 bool UI::Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* ButtonName, Vector TextDimensions, int TextSize)
 {
+    ButtonDimensions.y += 3.5;
+    ButtonDimensions.x += 3.5;
+    SDL_SetRenderDrawColor(Setup::renderer, 50, 50, 50, ButtonColor.a);
+    SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
+
+    ButtonDimensions.y -= 3.5;
+    ButtonDimensions.x -= 3.5;
     SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a);
     SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
 
@@ -702,16 +794,13 @@ bool UI::Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* B
             SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a);
             SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
 
-            SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a + 10);
+            SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a + 5);
             SDL_RenderRect(Setup::renderer, &ButtonDimensions);
-            if (buttonCooldown <= 0)
+            if (Player::LeftMouse && buttonCooldown <= 0)
             {
-                if (Player::LeftMouse)
-                {
-                    buttonCooldown = 60;
-                    Sound::PlaySpecificChannelSound(4, 0);
-                    return true;
-                }
+                buttonCooldown = 60;
+                Sound::PlaySpecificChannelSound(4, 0);
+                return true;
             }
         }
     }

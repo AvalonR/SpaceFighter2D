@@ -16,7 +16,7 @@ public:
     SDL_FRect* dstR{};
     int rotation{};
     Vector velocity{};
-    int owner{};
+    uint32_t owner{};
     float damage{};
 
     static float bulletSpeed;
@@ -24,8 +24,9 @@ public:
     static std::vector<Bullet> BulletList;
     static std::vector<std::pair<Bullet, int>> ScheduledBulletList;
     static void spawnBulletPlayer();
-    static void spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation);
+    static void spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation, uint32_t EUID);
     static void SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage);
+    static void SpawnSpecificBulletEnemy(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID);
     static void updateBullets();
 };
 
