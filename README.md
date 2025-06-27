@@ -33,14 +33,14 @@ ninja
 
 --------------------------------------------------
 
-In Game, you control an upgradable spaceship and must survive 6 levels, each with 3 waves of enemies. With each cleared wave, you grow stronger by selecting upgrades and buying gear with collected coins.
+In This Game, you control an upgradable spaceship and must survive 16 levels, each with 3 waves of enemies. With each cleared wave, you grow stronger by selecting upgrades and buying gear with collected coins.
 
 🌌 Features:
 Randomized Maps: Levels are picked from a pool of unique maps each time you play.
 
 --------------------------------------------------
 
-Enemy Generation: Adaptive enemy spawns challenge your tactics every wave. With currently 3 enemy types each with their unique strategy to fight the Player.
+Enemy Generation: Adaptive enemy spawns challenge your tactics every wave. With currently 3(+1 upcoming //in development) enemy types each with their unique strategy to fight the Player.
 
 --------------------------------------------------
 
