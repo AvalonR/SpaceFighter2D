@@ -15,15 +15,18 @@ class UI {
     static int UIAction;
     static int Scrolling;
     static bool ControlsPressed[7];
+    static bool DifficultyChosen;
     static const char* CurrentMenu;
     static void Init();
     static SDL_Texture* UITexture, * FullEscapeTexture, * NoButtonEscapeTexture;
     static bool Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* ButtonName, Vector TextDimensions, int TextSize);
+    static bool Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* ButtonName, Vector TextDimensions, int TextSize, SDL_Color TextColor);
     static int Dropdown(int choice_count, int current_choice, SDL_FRect DropdownDimensions, std::vector<const char*> DropdownOptions);
     static int Slider(SDL_FRect dest, int volume);
     static void RenderUI();
     static void PlayerStats();
     static void RestartRun();
+    static void DifficultyChoice();
     static void NextLevelPopUp();
     static void Escape();
     static void ScoreBoard();

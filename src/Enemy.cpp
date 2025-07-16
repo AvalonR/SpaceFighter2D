@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <random>
 
@@ -19,7 +20,7 @@
 float angle = 0.0f; // Angle in radians, used for circular movement
 float radius = 400.0f; // Distance from the player
 float rotationSpeed = 0.1f;
-std::vector<int> enemyRotations;
+std::vector<Rotation_ID> Enemy::enemyRotations;
 
 Enemy::Enemy()
 {
@@ -57,7 +58,7 @@ int aclock = 0;
 void Enemy::SwarmingScenario()
 {
     if (currentWaveIndex >= Waves.size()) {
-        if (Setup::EntityList.size() < 2) {
+        if (Setup::EntityList.size() == 1) { //only player alive
             Player::finished_level = true;
             if (aclock > 500) {
                 aclock = 0;
@@ -151,14 +152,22 @@ void Enemy::SpawnEnemy(int type)
     }
     if (type == 4)
     {
-        enemy.HP = 3.0f;
+        enemy.HP = 6.0f;
         enemy.dstR.w = 62 * 2;
         enemy.dstR.h = 85 * 2;
+        enemy.shooting_delay = 700;
     }
 
+    uint32_t uid = Setup::generateID(type);
     Setup::EntityList.emplace_back(enemy.HP, enemy.BC, type, enemy.x, enemy.y, type, enemy.srcR, enemy.dstR,
-                                   enemy.rotation, enemy.velocity, enemy.shooting_delay, 0, Setup::generateID(type));
-    enemyRotations.emplace_back((Randomizer(0, 1) == 0) ? 1 : -1);
+                                   enemy.rotation, enemy.velocity, enemy.shooting_delay, 0, uid);
+    if (type == 1)
+    {
+        enemyRotations.emplace_back((Randomizer(-2, 2)), uid);
+    }
+    else if (type == 4) {
+        enemyRotations.emplace_back((Randomizer(-1, 1)), uid);
+    }
 }
 
 void Enemy::EnemyAI()
@@ -257,10 +266,10 @@ void Enemy::EnemyAI()
                 TextureManager::animationsVec.emplace_back(0, 20, 300, Entity.rotation, 6, a, Entity.UID);
                 Sound::PlaySound(9);
                 Player::PlayerUpgrades.ExperienceP = std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
-                Setup::TargetScore += 250;
+                Setup::TargetScore += 350;
                 Player::enemies_killed++;
                 Player::bosses_killed++;
-                Loot::spawnCoins(coinrec, 100);
+                Loot::spawnCoins(coinrec, 150);
             }
             return true;
         } 
@@ -286,7 +295,7 @@ void Enemy::EnemyAI()
             // Repulsion from other enemies
             for (auto& OtherEnemy : Setup::EntityList)
             {
-                if (&Entity == &OtherEnemy) continue;
+                if (Entity.UID == OtherEnemy.UID) continue;
 
                 float diffX = Entity.x - OtherEnemy.x;
                 float diffY = Entity.y - OtherEnemy.y;
@@ -306,15 +315,11 @@ void Enemy::EnemyAI()
                 }
             }
             float orbitDirection;
-            size_t index = &Entity - &Setup::EntityList[0];
-            if (index - 1 < enemyRotations.size())
-            {
-                orbitDirection = static_cast<float>(enemyRotations[index-1]);
-            }
-            else
-            {
-                std::cerr << "Index " << index << " out of bounds for enemyRotations (size: " << enemyRotations.size() << ")\n";
-                orbitDirection = static_cast<float>(60);
+            for (auto& rotations : enemyRotations) {
+                if (rotations.UID == Entity.UID)
+                {
+                    orbitDirection = static_cast<float>(rotations.rotation);
+                }
             }
 
             float angle = std::atan2(dy, dx);
@@ -385,7 +390,7 @@ void Enemy::EnemyAI()
             // Repulsion from other enemies
             for (auto& OtherEnemy : Setup::EntityList)
             {
-                if (&Entity == &OtherEnemy) continue;
+                if (Entity.UID == OtherEnemy.UID) continue;
 
                 float diffX = Entity.x - OtherEnemy.x;
                 float diffY = Entity.y - OtherEnemy.y;
@@ -543,7 +548,7 @@ void Enemy::EnemyAI()
             // Repulsion from other enemies
             for (auto& OtherEnemy : Setup::EntityList)
             {
-                if (&Entity == &OtherEnemy) continue;
+                if (Entity.UID == OtherEnemy.UID) continue;
 
                 float diffX = Entity.x - OtherEnemy.x;
                 float diffY = Entity.y - OtherEnemy.y;
@@ -566,7 +571,6 @@ void Enemy::EnemyAI()
 
         if (Entity.type == 4) 
         {
-            // Compute attraction to player
             float dx = Setup::EntityList[0].dest.x - Entity.x;
             float dy = Setup::EntityList[0].dest.y - Entity.y;
             float distance = std::sqrt(dx * dx + dy * dy);
@@ -577,16 +581,15 @@ void Enemy::EnemyAI()
                 forceY += (dy / distance) * 0.5f;
             }
 
-            // Repulsion from other enemies
             for (auto& OtherEnemy : Setup::EntityList)
             {
-                if (&Entity == &OtherEnemy) continue;
+                if (Entity.UID == OtherEnemy.UID) continue;
 
                 float diffX = Entity.x - OtherEnemy.x;
                 float diffY = Entity.y - OtherEnemy.y;
                 float dist = std::sqrt(diffX * diffX + diffY * diffY);
 
-                if (dist < 100 && dist > 40) // Smooth repulsion
+                if (dist < 100 && dist > 40) 
                 {
                     float repelForce = 0.3f / dist;
                     forceX += (diffX / dist) * repelForce;
@@ -594,21 +597,17 @@ void Enemy::EnemyAI()
                 }
                 else if (dist <= 40)
                 {
-                    // Soft randomization to prevent stacking
                     forceX += -1.5f * static_cast<float>(Randomizer(-1, 1));
                     forceY += -1.5f * static_cast<float>(Randomizer(-1, 1));
                 }
             }
             float orbitDirection;
-            size_t index = &Entity - &Setup::EntityList[0];
-            if (index - 1 < enemyRotations.size())
-            {
-                orbitDirection = static_cast<float>(enemyRotations[index-1]);
-            }
-            else
-            {
-                std::cerr << "Index " << index << " out of bounds for enemyRotations (size: " << enemyRotations.size() << ")\n";
-                orbitDirection = static_cast<float>(60);
+            for (auto& rotations : enemyRotations) {
+                if (rotations.UID == Entity.UID)
+                {
+                    orbitDirection = static_cast<float>(rotations.rotation);
+                }
+            
             }
 
             float angle = std::atan2(dy, dx);
@@ -618,20 +617,19 @@ void Enemy::EnemyAI()
             forceX += orbitForceX;
             forceY += orbitForceY;
 
-            // Enemy Shooting
             Entity.rotation = (std::atan2(dy, dx) * (180.0f / M_PI)) + 90;
 
             if (Entity.shooting_delay <= 0)
             {
                 SDL_FRect shipanim = {Entity.dest.x, Entity.dest.y, 256, 256};
                 TextureManager::animationsVec.emplace_back(0, 20, 400, Entity.rotation, 7, shipanim, Entity.UID);
-                double angleRad = (Entity.rotation - 90) * (M_PI / 180.0f);
-                for (int i = 0; i < 5; i++)
-                {
-                    Bullet::SpawnSpecificBulletEnemy(Entity.dest.x - 20 + Entity.dest.w / 2, Entity.dest.y + Entity.dest.h / 2, angleRad, angleRad, 15 * i, 0.1f, Entity.UID);
-                    Bullet::SpawnSpecificBulletEnemy(Entity.dest.x + 20 + Entity.dest.w / 2, Entity.dest.y + Entity.dest.h / 2, angleRad, angleRad, 15 * i, 0.1f, Entity.UID);
-                }   
-                Entity.shooting_delay = 700;
+                float baseAngle = (Entity.rotation - 95) * (M_PI / 180.0f);
+                float spread = M_PI / 8.0f;
+                for (int i = 0; i < 12; i++) {
+                    float angle = baseAngle - spread/2 + spread * (i / 9.0f);
+                    Bullet::SpawnBattlecruiserBullet(Entity.dest.x + Entity.dest.w / 2, Entity.dest.y + Entity.dest.h / 2, angle, angle, 0 , 0.1f, Entity.UID);
+                }
+                Entity.shooting_delay = 500;
             }
             else
             {
@@ -643,11 +641,9 @@ void Enemy::EnemyAI()
                 {
                     float centerX = Entity.dest.x + Entity.dest.w / 2.0f;
                     float centerY = Entity.dest.y + Entity.dest.h / 2.0f;
-                    // Offset from center to bottom-center
                     float offsetX = 0.0f;
-                    float offsetY = Entity.dest.h / 11.0f; // push downward
+                    float offsetY = Entity.dest.h / 11.0f; 
 
-                    // Apply rotation
                     float radians = Entity.rotation * M_PI / 180.0f;
                     float rotatedX = std::cos(radians) * offsetX - std::sin(radians) * offsetY;
                     float rotatedY = std::sin(radians) * offsetX + std::cos(radians) * offsetY;
@@ -659,9 +655,8 @@ void Enemy::EnemyAI()
                 }
             }
 
-            // Apply forces using smooth interpolation
-            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.1f);
-            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.1f);
+            Entity.velocity.x = Map::lerp(Entity.velocity.x, forceX, 0.01f);
+            Entity.velocity.y = Map::lerp(Entity.velocity.y, forceY, 0.01f);
         }
     }
 }

@@ -61,6 +61,10 @@ void UI::Init()
     ButtonLayout.insert(std::pair<int, const char*>(3, "Windowed"));
     ButtonLayout.insert(std::pair<int, const char*>(4, "Restart"));
     ButtonLayout.insert(std::pair<int, const char*>(4, "Main Menu"));
+    ButtonLayout.insert(std::pair<int, const char*>(4, "Novice (1x)"));
+    ButtonLayout.insert(std::pair<int, const char*>(4, "Veteran (1.5x)"));
+    ButtonLayout.insert(std::pair<int, const char*>(4, "Calamity (2x)"));
+    ButtonLayout.insert(std::pair<int, const char*>(4, "Extremity (3x)"));
     ButtonLayout.insert(std::pair<int, const char*>(4, "Next Level"));
     ButtonLayout.insert(std::pair<int, const char*>(4, "Heal +20 Health"));
     ButtonLayout.insert(std::pair<int, const char*>(4, "Increase Max"));
@@ -77,6 +81,7 @@ void UI::Init()
     ButtonLayout.insert(std::pair<int, const char*>(5, "Back"));
 }
 int buttongoDown = 0;
+bool UI::DifficultyChosen = false;
 
 void UI::RenderUI()
 {
@@ -95,7 +100,10 @@ void UI::RenderUI()
             if (Button({855, 500, 180, 35}, {138, 43, 226, 180}, "Swarm Mode", {860, 500}, 24))
             {
                 CurrentMenu = "Swarm_Mode";
-                LevelPopUp++;
+                if (!DifficultyChosen)
+                {
+                    UIAction = 7;
+                }
             }
             if (Setup::Score > 0)
             {
@@ -104,7 +112,7 @@ void UI::RenderUI()
                     Enemy::RestartWaves();
                     Setup::Restart = true;
                     CurrentMenu = "Swarm_Mode";
-                    LevelPopUp++;
+                    UIAction = 7;
                 }
             }
             if (Button({855, 920, 180, 35}, {138, 43, 226, 180}, "Quit", {860, 920}, 24))
@@ -204,6 +212,12 @@ void UI::RenderUI()
                 Setup::is_Paused = true;
                 LevelUp();
             }
+            if (UIAction == 7)
+            {
+                CurrentLayer = 4;
+                Setup::is_Paused = true;
+                DifficultyChoice();
+            }
             if (UIAction == 0)
             {
                 Setup::is_Paused = false;
@@ -228,8 +242,8 @@ void UI::RenderUI()
 
 void UI::PlayerStats()
 {
-    if (1.0f + Player::PlayerUpgrades.bonusTotalHP > 1.0f) {
-        int numberOfSectors = std::max(1, static_cast<int>(std::round(1.0f + Player::PlayerUpgrades.bonusTotalHP)));
+    if (Player::PlayerUpgrades.TotalHP > 1.0f) {
+        int numberOfSectors = std::max(1, static_cast<int>(ceil(Player::PlayerUpgrades.TotalHP)));
         int sizeOfSectors = 200 / numberOfSectors;
         
         float hp = std::clamp(Setup::EntityList[0].HP, 0.0f, static_cast<float>(numberOfSectors));
@@ -237,22 +251,26 @@ void UI::PlayerStats()
         SDL_FRect HPbar = {1700, 1040, 200, 20};
         SDL_FRect InnerHPBar = {1700, 1040, 200 * (hp / numberOfSectors), 20};
         
+        SDL_SetRenderDrawColor(Setup::renderer, 70, 70, 70, 235);
+        SDL_RenderFillRect(Setup::renderer, &HPbar);
         SDL_SetRenderDrawColor(Setup::renderer, 255, 0, 0, 255);
         SDL_RenderRect(Setup::renderer, &HPbar);
         SDL_RenderFillRect(Setup::renderer, &InnerHPBar);
         SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
-        for (int i = 1; i <= static_cast<int>(1.0f + Player::PlayerUpgrades.bonusTotalHP); i++) {
+        for (int i = 1; i < numberOfSectors; i++) {
             SDL_RenderLine(Setup::renderer, 1700 + (sizeOfSectors * i), 1042, 1700 + (sizeOfSectors * i), 1058);
         }
     } else {
         SDL_FRect HPbar = {1700, 1040, 200, 20};
         SDL_FRect InnerHPBar = {1700, 1040, 200 * Setup::EntityList[0].HP, 20};
+        SDL_SetRenderDrawColor(Setup::renderer, 70, 70, 70, 235);
+        SDL_RenderFillRect(Setup::renderer, &HPbar);
         SDL_SetRenderDrawColor(Setup::renderer, 255, 0, 0, 255);
         SDL_RenderRect(Setup::renderer, &HPbar);
         SDL_RenderFillRect(Setup::renderer, &InnerHPBar);
     }
-    if (1.0f + Player::PlayerUpgrades.extraBulletCap > 1.0f) {
-        int numberOfBulletSectors = std::max(1, static_cast<int>(std::round(1.0f + Player::PlayerUpgrades.extraBulletCap)));
+    if (Player::PlayerUpgrades.TotalBulletCap > 1.0f) {
+        int numberOfBulletSectors = std::max(1, static_cast<int>(ceil(Player::PlayerUpgrades.TotalBulletCap)));
         int sizeOfBulletSectors = 200 / numberOfBulletSectors;
         
         float bc = std::clamp(Setup::EntityList[0].BC, 0.0f, static_cast<float>(numberOfBulletSectors));
@@ -260,17 +278,21 @@ void UI::PlayerStats()
         SDL_FRect BulletCap = {220, 1040, -200, 20};
         SDL_FRect InnerBulletCap = {220, 1040, -200 * (bc / numberOfBulletSectors), 20};
 
+        SDL_SetRenderDrawColor(Setup::renderer, 70, 70, 70, 235);
+        SDL_RenderFillRect(Setup::renderer, &BulletCap);
         SDL_SetRenderDrawColor(Setup::renderer, 255, 255, 0, 255);
         SDL_RenderRect(Setup::renderer, &BulletCap);
         SDL_RenderFillRect(Setup::renderer, &InnerBulletCap);
         SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
-        for (int i = 1; i <= numberOfBulletSectors; ++i) {
+        for (int i = 1; i < numberOfBulletSectors; ++i) {
             SDL_RenderLine(Setup::renderer, 220 - (sizeOfBulletSectors * i), 1042, 220 - (sizeOfBulletSectors * i), 1058);
         }
     } else {
         SDL_FRect BulletCap = {220, 1040, -200, 20};
         SDL_FRect InnerBulletCap = {220, 1040, -200 * Setup::EntityList[0].BC, 20};
 
+        SDL_SetRenderDrawColor(Setup::renderer, 70, 70, 70, 235);
+        SDL_RenderFillRect(Setup::renderer, &BulletCap);
         SDL_SetRenderDrawColor(Setup::renderer, 255, 255, 0, 255);
         SDL_RenderRect(Setup::renderer, &BulletCap);
         SDL_RenderFillRect(Setup::renderer, &InnerBulletCap);
@@ -278,6 +300,8 @@ void UI::PlayerStats()
     SDL_FRect EXPbar = {20, 10, 1880, 30};
     SDL_FRect InnerEXPbar = {20, 10, 1880 * Player::PlayerUpgrades.ExperienceP, 30};
 
+    SDL_SetRenderDrawColor(Setup::renderer, 70, 70, 70, 235);
+    SDL_RenderFillRect(Setup::renderer, &EXPbar);
     SDL_SetRenderDrawColor(Setup::renderer, 0, 255, 255, 255);
     SDL_RenderRect(Setup::renderer, &EXPbar);
     SDL_RenderFillRect(Setup::renderer, &InnerEXPbar);
@@ -287,6 +311,9 @@ void UI::PlayerStats()
 
     std::string coins = "Coins: " + std::to_string(Setup::Coins);
     TextManager::RenderText(coins.c_str(), {1040, 60}, {255, 255, 255, 255}, 24);
+
+    std::string entityCount = "Enemies: " + std::to_string(Setup::EntityList.size() - 1);
+    TextManager::RenderText(entityCount.c_str(), {1740, 60}, {255, 255, 255, 255}, 24);
 
     SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
     SDL_FRect HPIcon = {230, 1032, 32, 32};
@@ -301,7 +328,7 @@ bool misc_settings = false;
 
 void UI::RestartRun()
 {
-    SDL_FRect RestartOutline = {700, 400, 500, 200};
+    SDL_FRect RestartOutline = {700, 400, 500, 250};
     SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(Setup::renderer, &RestartOutline);
     SDL_SetRenderDrawColor(Setup::renderer, 0, 255, 255, 255);
@@ -312,6 +339,7 @@ void UI::RestartRun()
         Setup::Restart = true;
         UIAction = 0;
         CurrentLayer = 1;
+        UIAction = 6;
     }
     if (Button({865, 550, 155, 35}, {138, 43, 226, 180}, "Main Menu", {870, 550}, 24))
     {
@@ -319,6 +347,47 @@ void UI::RestartRun()
         UIAction = 0;
         CurrentLayer = 1;
         CurrentMenu = "Main_Menu";
+    }
+}
+
+void UI::DifficultyChoice()
+{
+    SDL_FRect RestartOutline = {700, 400, 500, 400};
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(Setup::renderer, &RestartOutline);
+    SDL_SetRenderDrawColor(Setup::renderer, 0, 255, 255, 255);
+    SDL_RenderRect(Setup::renderer, &RestartOutline);
+    if (Button({845, 430, 205, 35}, {138, 43, 226, 180}, "Novice (1x)", {850, 430}, 24, {255, 255, 255, 255}))
+    {
+        Setup::Difficulty = 1.0f;
+        UIAction = 0;
+        CurrentLayer = 1;
+        DifficultyChosen = true;
+        LevelPopUp++;
+    }
+    if (Button({845, 530, 205, 35}, {138, 43, 226, 180}, "Veteran (1.5x)", {850, 530}, 24, {255, 200, 200, 255}))
+    {
+        Setup::Difficulty = 1.5f;
+        UIAction = 0;
+        CurrentLayer = 1;
+        DifficultyChosen = true;
+        LevelPopUp++;
+    }
+    if (Button({845, 630, 205, 35}, {138, 43, 226, 180}, "Calamity (2x)", {850, 630}, 24, {255, 120, 120, 255}))
+    {
+        Setup::Difficulty = 2.0f;
+        UIAction = 0;
+        CurrentLayer = 1;
+        DifficultyChosen = true;
+        LevelPopUp++;
+    }
+    if (Button({845, 730, 205, 35}, {138, 43, 226, 180}, "Extremity (3x)", {850, 730}, 24, {255, 0, 0, 255}))
+    {
+        Setup::Difficulty = 3.0f;
+        UIAction = 0;
+        CurrentLayer = 1;
+        DifficultyChosen = true;
+        LevelPopUp++;
     }
 }
 
@@ -446,7 +515,7 @@ void UI::Store() {
         if (Button({550, 350, 180, 165}, {255, 255, 255, 100}, "Heal +20 Health" , {555, 470}, 16))
         {
             Setup::TargetCoins -= 80;
-            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
+            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, Player::PlayerUpgrades.TotalHP);
 
         }
         TextureManager::DrawTextureNP(9, Setup::renderer, &BCIcon, 0); 
@@ -462,8 +531,8 @@ void UI::Store() {
         if (Button({760, 350, 180, 165}, {255, 255, 255, 100}, "Increase Max", {765, 470}, 16))
         {
             Setup::TargetCoins -= 100;
-            Player::PlayerUpgrades.bonusTotalHP += 0.2f;
-            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, 1.0f + Player::PlayerUpgrades.bonusTotalHP);
+            Player::PlayerUpgrades.TotalHP += 0.2f;
+            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP + 0.2f, Player::PlayerUpgrades.TotalHP);
         }
         TextManager::RenderText("Health +20", {765, 490}, {255, 255, 255, 255}, 16);
         TextureManager::DrawTextureNP(15, Setup::renderer, &BCIcon, 0); 
@@ -479,8 +548,8 @@ void UI::Store() {
         if (Button({970, 350, 180, 165}, {255, 255, 255, 100}, "Boost Max", {975, 470}, 16))
         {
             Setup::TargetCoins -= 80;
-            Player::PlayerUpgrades.extraBulletCap += 0.2f;
-            Setup::EntityList[0].BC = std::min(Setup::EntityList[0].BC + 0.2f, 1.0f + Player::PlayerUpgrades.extraBulletCap);
+            Player::PlayerUpgrades.TotalBulletCap += 0.2f;
+            Setup::EntityList[0].BC = std::min(Setup::EntityList[0].BC + 0.2f, Player::PlayerUpgrades.TotalBulletCap);
         }
         TextManager::RenderText("Ammo +20", {975, 490}, {255, 255, 255, 255}, 16);
         TextureManager::DrawTextureNP(19, Setup::renderer, &BCIcon, 0); 
@@ -591,12 +660,12 @@ void UI::LevelUp() {
         UIAction = 0;
         CurrentLayer = 1;
         Player::PlayerUpgrades.ExperienceP = 0;
-        Player::PlayerUpgrades.bulletCooldownMultiplier *= 0.8f;
+        Player::PlayerUpgrades.bulletCooldownMultiplier *= 0.9f;
     }
     TextManager::RenderText("Loader", {555, 570}, {255, 255, 255, 255}, 18);
     TextManager::RenderText("Slightly Decrease", {555, 590}, {255, 255, 255, 255}, 16);
     TextManager::RenderText("Bullet Cooldown", {555, 610}, {255, 255, 255, 255}, 16);
-    TextManager::RenderText("-20%", {555, 630}, {255, 255, 255, 255}, 16);
+    TextManager::RenderText("-10%", {555, 630}, {255, 255, 255, 255}, 16);
     SDL_FRect BCIcon = {580, 420, 128, 128};
     TextureManager::DrawTextureNP(13, Setup::renderer, &BCIcon, 0); 
     if (Button({760, 400, 180, 260}, {255, 255, 255, 100}, "Sharpened Aim", {765, 550}, 18))
@@ -806,6 +875,41 @@ bool UI::Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* B
     }
     return false;
 }
+
+bool UI::Button(SDL_FRect ButtonDimensions, SDL_Color ButtonColor, const char* ButtonName, Vector TextDimensions, int TextSize, SDL_Color TextColor)
+{
+    ButtonDimensions.y += 3.5;
+    ButtonDimensions.x += 3.5;
+    SDL_SetRenderDrawColor(Setup::renderer, 50, 50, 50, ButtonColor.a);
+    SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
+
+    ButtonDimensions.y -= 3.5;
+    ButtonDimensions.x -= 3.5;
+    SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a);
+    SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
+
+    TextManager::RenderText(ButtonName, {TextDimensions.x, TextDimensions.y}, TextColor, TextSize);
+    SDL_FPoint LeftClickMousePos = {Setup::mouseCoordin.x, Setup::mouseCoordin.y};
+    if (LayerValidation(ButtonName))
+    {
+        if (SDL_PointInRectFloat(&LeftClickMousePos, &ButtonDimensions))
+        {
+            SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a);
+            SDL_RenderFillRect(Setup::renderer, &ButtonDimensions);
+
+            SDL_SetRenderDrawColor(Setup::renderer, ButtonColor.r, ButtonColor.g, ButtonColor.b, ButtonColor.a + 5);
+            SDL_RenderRect(Setup::renderer, &ButtonDimensions);
+            if (Player::LeftMouse && buttonCooldown <= 0)
+            {
+                buttonCooldown = 60;
+                Sound::PlaySpecificChannelSound(4, 0);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 int UI::Dropdown(int choice_count, int current_choice, SDL_FRect DropdownDimensions, std::vector<const char*> DropdownOptions)
 {
     static bool opendropd;

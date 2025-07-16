@@ -45,7 +45,7 @@ void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY, doubl
         // Calculate velocity components based on rotation
         bullet.velocity.x = -bulletSpeed * std::cos(angleRadians);
         bullet.velocity.y = -bulletSpeed * std::sin(angleRadians);
-        if (bullet.dstR->x < -100 || bullet.dstR->y < -100 || bullet.dstR->x > 2020 || bullet.dstR->y > 1920)
+        if (bullet.dstR->x < -200 || bullet.dstR->y < -200 || bullet.dstR->x > 2020 || bullet.dstR->y > 1920)
         {
             // SDL_Log("Error: Bullet spawned with invalid coordinates!");
         }
@@ -143,7 +143,7 @@ void Bullet::spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double
     }
 }
 
-void Bullet::SpawnSpecificBulletEnemy(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID) {
+void Bullet::SpawnBattlecruiserBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID) {
     float spawnDistance = 100.0f;  
     Bullet bullet;
     bullet.dstR->x = entityCenterX + cos(angleRad) * spawnDistance - bullet.dstR->w / 2;
@@ -153,10 +153,9 @@ void Bullet::SpawnSpecificBulletEnemy(float entityCenterX, float entityCenterY, 
     bullet.x = bullet.dstR->x;
     bullet.y = bullet.dstR->y;
 
-    // Calculate velocity components based on rotation
     bullet.velocity.x = bulletSpeed * std::cos(angleRadians);
     bullet.velocity.y = bulletSpeed * std::sin(angleRadians);
-    if (bullet.dstR->x < -100 || bullet.dstR->y < -100 || bullet.dstR->x > 2020 || bullet.dstR->y > 1920)
+    if (bullet.dstR->x < -100 || bullet.dstR->y < -100 || bullet.dstR->x > 2220 || bullet.dstR->y > 1520)
     {
         // SDL_Log("Error: Bullet spawned with invalid coordinates!");
     }

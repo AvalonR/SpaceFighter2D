@@ -102,22 +102,22 @@ void Map::MapGeneration() {
             std::vector<std::pair<int, int>> enemies;
             if (i < 6) {
                 if (j < 3) {
-                    enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
-                    enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 3));
+                    enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 2));
+                    enemies.emplace_back(Enemy::Randomizer(1, 2), Enemy::Randomizer(1, 2));
                 } else {
-                    enemies.emplace_back(3, 1);
-                    enemies.emplace_back(Enemy::Randomizer(1, 2), 3 * Enemy::Randomizer(1, 3));
+                    enemies.emplace_back(Enemy::Randomizer(3, 4), 1);
+                    enemies.emplace_back(Enemy::Randomizer(1, 2), 2 * Enemy::Randomizer(1, 3));
                 }
             } else if (i < 10) {
                 if (j < 3) {
                     enemies.emplace_back(Enemy::Randomizer(1, 2), 2 *Enemy::Randomizer(1, 3));
                     enemies.emplace_back(Enemy::Randomizer(1, 2), 2 *Enemy::Randomizer(1, 3));
                 } else {
-                    enemies.emplace_back(3, 1);
-                    enemies.emplace_back(Enemy::Randomizer(1, 2), 3 * Enemy::Randomizer(1, 3));
+                    enemies.emplace_back(Enemy::Randomizer(3, 4), 1);
+                    enemies.emplace_back(Enemy::Randomizer(1, 2), 2 * Enemy::Randomizer(1, 3));
                 }
             } else {
-                enemies.emplace_back(3, Enemy::Randomizer(1, 2));
+                enemies.emplace_back(Enemy::Randomizer(3, 4), Enemy::Randomizer(1, 2));
                 enemies.emplace_back(Enemy::Randomizer(1, 2), 3 * Enemy::Randomizer(1, 3));
             }
 

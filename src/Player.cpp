@@ -151,13 +151,13 @@ void Player::playerInput()
         healingcooldown--;
         PlayerReloadingCooldown--;
     }
-    if (Setup::EntityList[0].HP < 1.0f + Player::PlayerUpgrades.bonusTotalHP && healingcooldown < 0) {
+    if (Setup::EntityList[0].HP < Player::PlayerUpgrades.TotalHP && healingcooldown < 0) {
         if (!Setup::is_Paused){
-            Setup::EntityList[0].HP = std::min(Setup::EntityList[0].HP * (Player::PlayerUpgrades.PassiveHealing), 1.0f + Player::PlayerUpgrades.bonusTotalHP);
+            Setup::EntityList[0].HP = std::min((Setup::EntityList[0].HP) * (Player::PlayerUpgrades.PassiveHealing), Player::PlayerUpgrades.TotalHP);
             healingcooldown = 144;
         }
     }
-    if (Setup::EntityList[0].BC >= 1.0f + PlayerUpgrades.extraBulletCap)
+    if (Setup::EntityList[0].BC >= PlayerUpgrades.TotalBulletCap)
     {
         isReloading = false;
     }
@@ -200,14 +200,15 @@ void Player::playerInput()
                 {
                     UI::UIAction = 1;
                 }
-                else if (UI::UIAction == 4) 
-                {
-
-                } 
-                else
+                else if (UI::UIAction == 1)
                 {
                     UI::UIAction = 0;
                 }
+                else if (UI::UIAction == 7) 
+                {
+                    UI::CurrentMenu = "Main_Menu";
+                    UI::UIAction = 0;
+                } 
             }
         }
         if (Setup::event.type == SDL_EVENT_MOUSE_WHEEL) {
@@ -241,7 +242,7 @@ void Player::playerInput()
             UI::ControlsPressed[0] = true;
             if (Setup::is_Paused != true)
             {
-                if (Setup::EntityList[0].BC < 1.0f && !isReloading)
+                if (Setup::EntityList[0].BC < PlayerUpgrades.TotalBulletCap && !isReloading)
                 {
                     isReloading = true;
                 }

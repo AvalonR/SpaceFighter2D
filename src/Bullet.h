@@ -26,7 +26,7 @@ public:
     static void spawnBulletPlayer();
     static void spawnBulletEnemy(Vector Entity_destxy, Vector Entity_destwh, double enemy_rotation, uint32_t EUID);
     static void SpawnSpecificBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage);
-    static void SpawnSpecificBulletEnemy(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID);
+    static void SpawnBattlecruiserBullet(float entityCenterX, float entityCenterY, double angleRad, double angleRadians, int delayMS, float damage, uint32_t EUID);
     static void updateBullets();
 };
 

@@ -22,7 +22,6 @@ public:
     static void PlaySound(int soundchoice);
     static void PlaySpecificChannelSound(int soundchoice, int channel);
     static void PlayMusic(const char* filename, int loops);
-    static void PlaySoundFade(const char* filename, int channel, int fadeIn, int fadeOut);
     static void PAndUNP_SoundEffects(bool choice);
     static void Cleanup();
 };

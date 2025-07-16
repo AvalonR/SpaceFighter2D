@@ -31,6 +31,11 @@ Rebuild(after making changes):
 ninja
 ```
 
+For LSP to work properly and see the modules:
+```bash
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .
+```
+
 --------------------------------------------------
 
 In This Game, you control an upgradable spaceship and must survive 16 levels, each with 3 waves of enemies. With each cleared wave, you grow stronger by selecting upgrades and buying gear with collected coins.

@@ -6,6 +6,10 @@
 #define ENEMY_H
 
 #include "Setup.h"
+struct Rotation_ID{
+    int rotation;
+    uint32_t UID;
+};
 struct EnemyWave
 {
     int EnemyTypes[2]; // Types of enemies in this wave
@@ -26,6 +30,7 @@ public:
     int rotation{}, shooting_delay{}, type{};
     static int basicDelay[4];
     static std::vector<EnemyWave> Waves; 
+    static std::vector<Rotation_ID> enemyRotations;
     static void RestartWaves();
     static int Randomizer(int x, int y);
     static void SwarmingScenario();

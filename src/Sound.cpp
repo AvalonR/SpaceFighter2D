@@ -23,7 +23,7 @@ void Sound::Init()
     }
     Mix_AllocateChannels(96);
     Mix_Volume(-1, 40);
-    Mix_VolumeMusic(40);
+    Mix_VolumeMusic(20);
     LoadSound("playerlaserFO.wav");
     LoadSound("enemylaserFO.wav");
     LoadSound("shipexplosionFO.wav");
@@ -40,7 +40,7 @@ void Sound::Init()
     LoadSound("sparkSFO.wav");
     LoadSound("reloadFO.wav");
     Mix_ReserveChannels(1);
-    VolumeAdjustmentChannel[0] = 104;
+    VolumeAdjustmentChannel[0] = 84;
     VolumeAdjustmentChannel[1] = 34;
     VolumeAdjustmentChannel[2] = 34;
     VolumeAdjustmentChannel[3] = 34;
@@ -107,7 +107,7 @@ void Sound::PlaySound(int soundchoice)
     int channel = Mix_PlayChannel(-1, SoundVector[soundchoice], 0);
     if (channel == -1)
     {
-        std::cout << "Error playing sound effect: " << SDL_GetError() << std::endl;
+        // std::cout << "Error playing sound effect: " << SDL_GetError() << std::endl;
     }
     else {
         ChannelPlayingVector.emplace_back(channel, soundchoice);
@@ -128,7 +128,7 @@ void Sound::PlaySpecificChannelSound(int soundchoice, int channel)
 }
 void Sound::PlayMusic(const char* filename, int loops)
 {
-    Mix_VolumeMusic(64);
+    Mix_VolumeMusic(34);
     std::string DirDest = getcwd(nullptr, 0);
     auto first = DirDest.end() - 17;
     auto last = DirDest.end();
@@ -144,27 +144,6 @@ void Sound::PlayMusic(const char* filename, int loops)
         return;
     }
     Mix_PlayMusic(music, loops);
-}
-void Sound::PlaySoundFade(const char* filename, int channel, int fadeIn, int fadeOut)
-{
-    std::string DirDest = getcwd(nullptr, 0);
-    auto first = DirDest.end() - 17;
-    auto last = DirDest.end();
-    DirDest.erase(first, last);
-    std::replace(DirDest.begin(), DirDest.end(), '\\', '/');
-    std::string assetspath = "A:/C++/Game2D/assets/";
-    std::string filepath = assetspath + filename;
-    // std::cout << filepath << std::endl;
-    Mix_Chunk* soundEffect = Mix_LoadWAV(filepath.c_str());
-    if (!soundEffect)
-    {
-        std::cout << "Error loading sound effect" << std::endl;
-        return;
-    }
-    if (Mix_FadeInChannel(channel,soundEffect, 0,fadeIn) == -1)
-    {
-        std::cout << "Error playing sound effect" << std::endl;
-    }
 }
 void Sound::PAndUNP_SoundEffects(bool choice)
 {

@@ -218,7 +218,6 @@ void Setup::initialization()
         Map::MapTextureNames.emplace_back("Space_Background4.png");
         Map::MapTextureNames.emplace_back("Space_Background5.png");
     }
-    Mix_VolumeMusic(12);
     Map::MapGeneration();
     CurrentLevel = 1;
     Map::NewMap(CurrentLevel);
@@ -256,6 +255,7 @@ void Setup::restart()
         Bullet::ScheduledBulletList.clear();
         TextureManager::animationsVec.clear();
         Loot::ParticleVector.clear();
+        Enemy::enemyRotations.clear();
         Loot::CoinVector.clear();
         Player player;
         EntityList.emplace_back(player.HP, player.BC, 0, player.x, player.y, player.TextureID, player.srcR, player.dstR, player.rotation, player.velocity, player.shooting_delay, 0, generateID(0));
@@ -271,6 +271,7 @@ void Setup::restart()
         Coins = 0;
         TargetCoins = 0;
         UI::CurrentLayer = 1;
+        UI::DifficultyChosen = false;
         Sound::PlaySound(11);
         Player::PlayerUpgrades = PlayerUpgradeStats{};
         Map::MapGeneration();
@@ -284,6 +285,7 @@ void Setup::nextLevel()
     Bullet::ScheduledBulletList.clear();
     TextureManager::animationsVec.clear();
     Loot::ParticleVector.clear();
+    Enemy::enemyRotations.clear();
     Player::hitPlayerLevel = false;
     is_Paused = true;
     UI::CurrentLayer = 4;
@@ -434,7 +436,7 @@ void Setup::render()
         }
         bool colorMod = false;
         for (auto& Entity : EntityList) {
-            if (animation.AnimationNumber == 5 && Entity.type == 3 && Entity.effectTimer > 0) {
+            if ((animation.AnimationNumber == 5 && Entity.type == 3 && Entity.effectTimer > 0) || (animation.AnimationNumber == 7 && Entity.type == 4 && Entity.effectTimer > 0)) {
                 if (Entity.UID == animation.EUID) {
                     colorMod = true;
                     }

@@ -16,10 +16,10 @@ struct PlayerUpgradeStats {
     float ExperienceP = 0;
     int extraBulletsPerShot = 0;
     bool firemodes[3]; // 0 -> shotgun spread | 1 -> burst fire | 2 -> parallel fire
-    float bonusTotalHP = 0;
+    float TotalHP = 1.0f;
     float PassiveHealing = 1.0f;
     float MovementSpeed = 1.0f;
-    float extraBulletCap = 0;
+    float TotalBulletCap = 1.0f;
     float damagePerBullet = 0;
     float bulletCooldownMultiplier = 1.0f; // < 1.0 = faster
 };
