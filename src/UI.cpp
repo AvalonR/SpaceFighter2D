@@ -337,9 +337,8 @@ void UI::RestartRun()
     {
         Setup::RandomizeMusic();
         Setup::Restart = true;
-        UIAction = 0;
         CurrentLayer = 1;
-        UIAction = 6;
+        UIAction = 7;
     }
     if (Button({865, 550, 155, 35}, {138, 43, 226, 180}, "Main Menu", {870, 550}, 24))
     {
