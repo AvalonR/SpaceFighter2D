@@ -1,6 +1,7 @@
 //
 // Created by romak on 23.01.2025.
 //
+#pragma once
 
 #ifndef MAP_H
 #define MAP_H
@@ -17,8 +18,8 @@ public:
     static float lerp(float start, float end, float t);
     static void NewMap(int levelID);
     static void MapGeneration();
-    static void MapUpdate();
-    static void MapRender();
+    static void MapUpdate(GameManager& gm);
+    static void MapRender(GameManager& gm);
 };
 
 
