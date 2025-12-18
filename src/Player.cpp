@@ -1,7 +1,3 @@
-//
-// Created by romak on 16.01.2025.
-//
-
 #include "Player.h"
 #include <algorithm>
 #include <cmath>
@@ -11,26 +7,79 @@
 #include "Bullet.h"
 #include "Setup.h"
 #include "Sound.h"
+#include "TextureManager.h"
 #include "UI.h"
 
 bool Player::LeftMouse = false;
 bool Player::RightMouse = false;
-std::unordered_map<SDL_Keycode, bool>
-    Player::keyState; // Holds the state of keys
+std::unordered_map<SDL_Keycode, bool> Player::keyState;
 
-Player::Player() {
+Player::Player() : Entity() {
   HP = 1.0f;
   BC = 1.0f;
   x = y = 800.0;
-  srcR = {};
-  dstR = {800, 500, 84, 84};
+  src = {};
+  dest = {800, 500, 84, 84};
   TextureID = 0;
   velocity.x = velocity.y = 0;
   rotation = 0;
   shooting_delay = 0;
+  type = 0;
 }
 
-Player::~Player() = default;
+void Player::update(GameManager &gm) {
+  updatePosition(gm.getDelta(), gm.getSpeed() * PlayerUpgrades.MovementSpeed);
+
+  SDL_FRect dest = getDestRect();
+  float clampedX = std::clamp(x, 0.0f, gm.getWindowW() - dest.w);
+  float clampedY = std::clamp(y, 0.0f, gm.getWindowH() - dest.h);
+  setPosition(clampedX, clampedY);
+
+  // Update effect timer
+  if (effectTimer > 0) {
+    effectTimer -= gm.getDelta();
+  }
+
+  // Handle engine trail animation
+  Vector vel = getVelocity();
+  if (vel.x != 0.0f || vel.y != 0.0f) {
+    bool found = false;
+    SDL_FRect a = getDestRect();
+    float centerX = a.x + a.w / 2.0f;
+    float centerY = a.y + a.h / 2.0f;
+
+    a.h *= 1.6f;
+    a.w *= 1.6f;
+    a.x = centerX - a.w / 2.0f;
+    a.y = centerY - a.h / 2.0f;
+
+    for (auto &animation : TextureManager::animationsVec) {
+      if (animation.AnimationNumber == 8 && animation.EUID == UID) {
+        animation.destRect = a;
+        animation.angle = rotation;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      TextureManager::animationsVec.emplace_back(0, 10, 300, rotation, 8, a,
+                                                 UID);
+    }
+  } else {
+    TextureManager::animationsVec.erase(
+        std::remove_if(TextureManager::animationsVec.begin(),
+                       TextureManager::animationsVec.end(),
+                       [this](const AnimationVector &anim) {
+                         return anim.AnimationNumber == 8 && anim.EUID == UID;
+                       }),
+        TextureManager::animationsVec.end());
+  }
+}
+
+void Player::onDeath(GameManager &gm) {
+  // Handle player death
+}
 float PlayerReloadingCooldown = 0;
 bool isReloading = false;
 int Player::enemies_killed = 0;
@@ -95,7 +144,8 @@ void Player::AchievementLogging(GameManager &gm) {
     completedachivements++;
   }
   Achievements[7].title = "Survivor's Instinct";
-  if (finished_level && gm.getEntityManager().getPlayer().HP < 0.3f &&
+  Entity *player = gm.getEntityManager().getPlayer();
+  if (finished_level && player && player->getHP() < 0.3f &&
       !Achievements[7].achieved) {
     Achievements[7].achieved = true;
     Achievements[7].description =
@@ -152,8 +202,11 @@ float healingcooldown = 144.0f;
 bool Player::levelUpSoundPlayed = false;
 void Player::playerInput(GameManager &gm) {
   float delta = gm.getDelta();
+  Entity *player = gm.getEntityManager().getPlayer();
+  if (!player)
+    return;
 
-  if (PlayerUpgrades.ExperienceP == 1.0f && UI::ContainsSwarmPlaying()) {
+  if (PlayerUpgrades.ExperienceP >= 1.0f && UI::ContainsSwarmPlaying()) {
     if (!levelUpSoundPlayed) {
       levelUpSoundPlayed = true;
       Sound::PlaySound(10);
@@ -168,39 +221,35 @@ void Player::playerInput(GameManager &gm) {
   if (!gm.get_is_Paused()) {
     healingcooldown -= delta;
     PlayerReloadingCooldown -= delta;
-    gm.getEntityManager().getPlayer().shooting_delay -= delta;
+    float shootDelay = player->getShootingDelay() - delta;
+    player->setShootingDelay(shootDelay);
   }
-  if (gm.getEntityManager().getPlayer().HP < Player::PlayerUpgrades.TotalHP &&
-      healingcooldown < 0) {
+  if (player->getHP() < Player::PlayerUpgrades.TotalHP && healingcooldown < 0) {
     if (!gm.get_is_Paused()) {
-      gm.getEntityManager().getPlayer().HP =
-          std::min((gm.getEntityManager().getPlayer().HP) *
-                       (Player::PlayerUpgrades.PassiveHealing),
-                   Player::PlayerUpgrades.TotalHP);
+      player->setHP(
+          std::min(player->getHP() * Player::PlayerUpgrades.PassiveHealing,
+                   Player::PlayerUpgrades.TotalHP));
       healingcooldown = 144.0f;
     }
   }
-  if (gm.getEntityManager().getPlayer().BC >= PlayerUpgrades.TotalBulletCap) {
+  if (player->getBC() >= PlayerUpgrades.TotalBulletCap) {
     isReloading = false;
   }
   if (isReloading == true && PlayerReloadingCooldown <= 0) {
     if (!gm.get_is_Paused()) {
       Sound::PlaySound(14);
-      gm.getEntityManager().getPlayer().BC += 0.1f;
+      player->setBC(player->getBC() + 0.1f);
       PlayerReloadingCooldown =
           static_cast<int>(72 * PlayerUpgrades.bulletCooldownMultiplier);
     }
   }
   SDL_GetMouseState(&gm.getMouseCoordin().x, &gm.getMouseCoordin().y);
   // Calculate deltas using double precision
-  double deltaX =
-      static_cast<double>(gm.getMouseCoordin().x) -
-      static_cast<double>(gm.getEntityManager().getPlayer().dest.x +
-                          gm.getEntityManager().getPlayer().dest.w / 2);
-  double deltaY =
-      static_cast<double>(gm.getMouseCoordin().y) -
-      static_cast<double>(gm.getEntityManager().getPlayer().dest.y +
-                          gm.getEntityManager().getPlayer().dest.h / 2);
+  SDL_FRect playerDest = player->getDestRect();
+  double deltaX = static_cast<double>(gm.getMouseCoordin().x) -
+                  static_cast<double>(playerDest.x + playerDest.w / 2);
+  double deltaY = static_cast<double>(gm.getMouseCoordin().y) -
+                  static_cast<double>(playerDest.y + playerDest.h / 2);
 
   double angleDegrees = (std::atan2(deltaY, deltaX) * (180.0f / M_PI)) + 90.0;
 
@@ -238,16 +287,14 @@ void Player::playerInput(GameManager &gm) {
       }
       keyState[gm.getEvent().key.key] = false;
     }
-    gm.getEntityManager().getPlayer().velocity.x = 0.0f;
-    gm.getEntityManager().getPlayer().velocity.y = 0.0f;
+    player->setVelocity({0.0f, 0.0f});
     if (keyState[SDLK_E]) {
       UI::ControlsPressed[2] = true;
       if (gm.get_is_Paused() != true) {
-        if (gm.getEntityManager().getPlayer().shooting_delay <= 0 &&
-            gm.getEntityManager().getPlayer().BC >= 0) {
+        if (player->getShootingDelay() <= 0 && player->getBC() >= 0) {
           isReloading = false;
-          gm.getEntityManager().getPlayer().shooting_delay = 100;
-          gm.getEntityManager().getPlayer().BC -= 0.1f;
+          player->setShootingDelay(100);
+          player->setBC(player->getBC() - 0.1f);
           Bullet::spawnBulletPlayer();
         }
       }
@@ -255,9 +302,7 @@ void Player::playerInput(GameManager &gm) {
     if (keyState[SDLK_Q]) {
       UI::ControlsPressed[0] = true;
       if (gm.get_is_Paused() != true) {
-        if (gm.getEntityManager().getPlayer().BC <
-                PlayerUpgrades.TotalBulletCap &&
-            !isReloading) {
+        if (player->getBC() < PlayerUpgrades.TotalBulletCap && !isReloading) {
           isReloading = true;
         }
       }
@@ -290,23 +335,26 @@ void Player::playerInput(GameManager &gm) {
     }
     if (gm.get_is_Paused())
       return;
-    gm.getEntityManager().getPlayer().rotation = angleDegrees;
+    player->setRotation(angleDegrees);
 
+    // Reset velocity each frame, then apply input
+    Vector vel = {0.0f, 0.0f};
     if (keyState[SDLK_W]) {
-      gm.getEntityManager().getPlayer().velocity.y -= 1.0f;
+      vel.y -= 1.0f;
       UI::ControlsPressed[1] = true;
     } // Move up
     if (keyState[SDLK_S]) {
-      gm.getEntityManager().getPlayer().velocity.y += 1.0f;
+      vel.y += 1.0f;
       UI::ControlsPressed[4] = true;
     } // Move down
     if (keyState[SDLK_A]) {
-      gm.getEntityManager().getPlayer().velocity.x -= 1.0f;
+      vel.x -= 1.0f;
       UI::ControlsPressed[3] = true;
     } // Move left
     if (keyState[SDLK_D]) {
-      gm.getEntityManager().getPlayer().velocity.x += 1.0f;
+      vel.x += 1.0f;
       UI::ControlsPressed[5] = true;
     } // Move right
+    player->setVelocity(vel);
   }
 }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 project(Game2D)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -32,7 +32,9 @@ add_executable(${PROJECT_NAME}
     src/Player.cpp
     src/Setup.cpp
     src/TextureManager.cpp
-    src/Enemy.cpp src/Enemy.h
+    src/Entity.cpp src/Entity.h
+    src/EnemyNew.cpp src/EnemyNew.h
+    src/EntityManager.cpp
     src/UI.cpp src/UI.h
     src/Bullet.cpp src/Bullet.h
     src/Map.cpp src/Map.h

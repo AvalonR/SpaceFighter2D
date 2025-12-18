@@ -1,14 +1,11 @@
 #include "TextManager.h"
 #include <cstring>
 
-// Private constructor
 TextManager::TextManager() {
   fontPath = Setup::basePath + "/assets/LiberationSans-Bold.ttf";
 }
 
-// Destructor
 TextManager::~TextManager() {
-  // Clean up all cached resources
   for (auto &pair : fontCache) {
     TTF_CloseFont(pair.second);
   }
@@ -17,28 +14,23 @@ TextManager::~TextManager() {
   }
 }
 
-// Static method - public interface
 void TextManager::RenderText(const char *text, Vector Coordinates,
                              SDL_Color TextColor, int TextSize) {
-  static TextManager instance; // Singleton instance created once
+  static TextManager instance;
   instance.RenderTextInternal(text, Coordinates, TextColor, TextSize);
 }
 
-// Instance method - does the actual rendering
 void TextManager::RenderTextInternal(const char *text, Vector Coordinates,
                                      SDL_Color TextColor, int TextSize) {
-  // Get or load font
   TTF_Font *font = GetFont(TextSize);
   if (!font)
     return;
 
-  // Check cache for existing texture
   TextCacheKey key{text, TextSize, TextColor};
   SDL_Texture *texture = GetOrCreateTexture(key, font, text, TextColor);
   if (!texture)
     return;
 
-  // Get dimensions and render
   float textWidth = 0, textHeight = 0;
   SDL_GetTextureSize(texture, &textWidth, &textHeight);
 
@@ -47,7 +39,6 @@ void TextManager::RenderTextInternal(const char *text, Vector Coordinates,
                     nullptr, &destRect);
 }
 
-// Get or load font from cache
 TTF_Font *TextManager::GetFont(int size) {
   auto it = fontCache.find(size);
   if (it != fontCache.end()) {
@@ -65,7 +56,6 @@ TTF_Font *TextManager::GetFont(int size) {
   return font;
 }
 
-// Get or create texture from cache
 SDL_Texture *TextManager::GetOrCreateTexture(const TextCacheKey &key,
                                              TTF_Font *font, const char *text,
                                              SDL_Color color) {
@@ -74,7 +64,6 @@ SDL_Texture *TextManager::GetOrCreateTexture(const TextCacheKey &key,
     return it->second;
   }
 
-  // Create new texture
   SDL_Surface *surface = TTF_RenderText_Solid(font, text, strlen(text), color);
   if (!surface) {
     std::cerr << "Text surface could not be created! TTF_Error: "
@@ -96,7 +85,6 @@ SDL_Texture *TextManager::GetOrCreateTexture(const TextCacheKey &key,
   return texture;
 }
 
-// Optional: Clear texture cache
 void TextManager::ClearTextureCache() {
   static TextManager instance;
   for (auto &pair : instance.textureCache) {

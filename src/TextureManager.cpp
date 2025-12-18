@@ -1,7 +1,3 @@
-//
-// Created by romak on 17.01.2025.
-//
-
 #include "TextureManager.h"
 #include "Bullet.h"
 #include "Setup.h"

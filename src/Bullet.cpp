@@ -1,14 +1,10 @@
-//
-// Created by romak on 18.01.2025.
-//
-
 #include "Bullet.h"
 
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
-#include "Enemy.h"
+#include "EnemyNew.h"
 #include "Loot.h"
 #include "Player.h"
 #include "Setup.h"
@@ -53,8 +49,9 @@ void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY,
       bullet.dstR->y > 1920) {
     // SDL_Log("Error: Bullet spawned with invalid coordinates!");
   } else {
-    bullet.owner =
-        GameManagerSingleton::instance().getEntityManager().getPlayer().UID;
+    Entity *player =
+        GameManagerSingleton::instance().getEntityManager().getPlayer();
+    bullet.owner = player ? player->getUID() : 0;
     bullet.damage = damage + Player::PlayerUpgrades.damagePerBullet;
     if (delayMS > 0) {
       ScheduledBulletList.emplace_back(std::pair<Bullet, int>(bullet, delayMS));
@@ -66,33 +63,24 @@ void Bullet::SpawnSpecificBullet(float entityCenterX, float entityCenterY,
 }
 
 void Bullet::spawnBulletPlayer() {
+  Entity *player =
+      GameManagerSingleton::instance().getEntityManager().getPlayer();
+  if (!player)
+    return;
 
-  float entityCenterX =
-      GameManagerSingleton::instance().getEntityManager().getPlayer().dest.x +
-      GameManagerSingleton::instance().getEntityManager().getPlayer().dest.w /
-          2;
-  float entityCenterY =
-      GameManagerSingleton::instance().getEntityManager().getPlayer().dest.y +
-      GameManagerSingleton::instance().getEntityManager().getPlayer().dest.h /
-          2;
-  double angleRad = (GameManagerSingleton::instance()
-                         .getEntityManager()
-                         .getPlayer()
-                         .rotation -
-                     90) *
-                    (M_PI / 180.0f);
+  SDL_FRect playerDest = player->getDestRect();
+  double playerRotation = player->getRotation();
+
+  float entityCenterX = playerDest.x + playerDest.w / 2;
+  float entityCenterY = playerDest.y + playerDest.h / 2;
+  double angleRad = (playerRotation - 90) * (M_PI / 180.0f);
 
   if (Player::PlayerUpgrades.firemodes[0]) { // Shotgun fire
     int bulletcount = 2 + Player::PlayerUpgrades.extraBulletsPerShot;
     float spread = 0.2f;
 
     for (int i = 0; i < bulletcount; i++) {
-      double angleRadians = ((GameManagerSingleton::instance()
-                                  .getEntityManager()
-                                  .getPlayer()
-                                  .rotation +
-                              90) *
-                             (M_PI / 180.0f));
+      double angleRadians = ((playerRotation + 90) * (M_PI / 180.0f));
       float offset = spread * (i - (bulletcount - 1) / 2.0f);
       SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad + offset,
                           angleRadians + offset, 0, (0.2f / (bulletcount)));
@@ -115,12 +103,7 @@ void Bullet::spawnBulletPlayer() {
       float sideOffset = spacing * (i - (bulletcount - 1) / 2.0f);
       float offsetX = cos(angleRad + M_PI_2) * sideOffset;
       float offsetY = sin(angleRad + M_PI_2) * sideOffset;
-      double angleRadians = (GameManagerSingleton::instance()
-                                 .getEntityManager()
-                                 .getPlayer()
-                                 .rotation +
-                             90) *
-                            (M_PI / 180.0f);
+      double angleRadians = ((playerRotation + 90) * (M_PI / 180.0f));
       SpawnSpecificBullet(entityCenterX + offsetX, entityCenterY + offsetY,
                           angleRad, angleRadians, 0, (0.2f / (bulletcount)));
     }
@@ -131,12 +114,7 @@ void Bullet::spawnBulletPlayer() {
     int bulletcount = 1 + Player::PlayerUpgrades.extraBulletsPerShot;
 
     for (int i = 0; i < bulletcount; i++) {
-      double angleRadians = (GameManagerSingleton::instance()
-                                 .getEntityManager()
-                                 .getPlayer()
-                                 .rotation +
-                             90) *
-                            (M_PI / 180.0f);
+      double angleRadians = ((playerRotation + 90) * (M_PI / 180.0f));
       SpawnSpecificBullet(entityCenterX, entityCenterY, angleRad, angleRadians,
                           10 * i, (0.2f / (bulletcount)));
     }
@@ -240,37 +218,42 @@ void Bullet::updateBullets(GameManager &gm) {
             SDL_FRect BulletcollisionRect = {
                 bullet.dstR->x * 1.05f, bullet.dstR->y * 1.05f,
                 bullet.dstR->w * 0.5f, bullet.dstR->w * 0.5f};
-            for (auto &Entity : GameManagerSingleton::instance()
-                                    .getEntityManager()
-                                    .getEntities()) {
+            Entity *player =
+                GameManagerSingleton::instance().getEntityManager().getPlayer();
+            for (Entity *entity : GameManagerSingleton::instance()
+                                      .getEntityManager()
+                                      .getEntities()) {
+              if (!entity)
+                continue;
               index++;
+              SDL_FRect entityDest = entity->getDestRect();
               SDL_FRect EntitycollisionRect = {
-                  Entity.dest.x * 1.01f, Entity.dest.y * 1.01f,
-                  Entity.dest.w * 0.95f, Entity.dest.w * 0.95f};
+                  entityDest.x * 1.01f, entityDest.y * 1.01f,
+                  entityDest.w * 0.95f, entityDest.w * 0.95f};
               if (SDL_GetRectIntersectionFloat(&BulletcollisionRect,
                                                &EntitycollisionRect,
                                                &BulletParticle) &&
-                  bullet.owner != Entity.UID) {
-                Entity.HP -= bullet.damage;
-                Entity.effectTimer = 25;
+                  bullet.owner != entity->getUID()) {
+                entity->takeDamage(bullet.damage);
+                entity->setEffectTimer(25);
                 Sound::PlaySound(3);
-                if (bullet.owner == GameManagerSingleton::instance()
-                                        .getEntityManager()
-                                        .getPlayer()
-                                        .UID) {
+                if (player && bullet.owner == player->getUID()) {
                   Player::shots_landed++;
                 }
-                if (Entity.type == 0) {
+                int entityType = entity->getTypeID();
+                if (entityType == 0) {
                   Player::hitPlayerWave = true;
                   Player::hitPlayerLevel = true;
                 }
-                if (Entity.type != 3) {
-                  float angle = std::atan2(Entity.dest.y - bullet.dstR->y,
-                                           Entity.dest.x - bullet.dstR->x);
-                  Entity.velocity.x =
-                      Map::lerp(Entity.velocity.x, std::cos(angle) * 0.2, 0.1f);
-                  Entity.velocity.y =
-                      Map::lerp(Entity.velocity.y, std::sin(angle) * 0.2, 0.1f);
+                if (entityType != 3) {
+                  Vector velocity = entity->getVelocity();
+                  float angle = std::atan2(entityDest.y - bullet.dstR->y,
+                                           entityDest.x - bullet.dstR->x);
+                  velocity.x =
+                      Map::lerp(velocity.x, std::cos(angle) * 0.2, 0.1f);
+                  velocity.y =
+                      Map::lerp(velocity.y, std::sin(angle) * 0.2, 0.1f);
+                  entity->setVelocity(velocity);
                 }
                 Sound::PlaySound(13);
                 SDL_FPoint spark = {BulletParticle.x, BulletParticle.y};

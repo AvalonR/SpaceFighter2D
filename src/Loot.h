@@ -1,5 +1,5 @@
 #pragma once
-#include "Enemy.h"
+#include "EnemyNew.h"
 #include "Map.h"
 #include "Setup.h"
 #include "Sound.h"

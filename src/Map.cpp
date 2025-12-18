@@ -3,7 +3,7 @@
 //
 
 #include "Map.h"
-#include "Enemy.h"
+#include "EnemyNew.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -187,10 +187,12 @@ void Map::MapUpdate(GameManager &gm) {
   src->h = static_cast<float>(gm.getWindowH());
   float x_right = 600, y_bottom = 120;
 
-  src->x =
-      lerp(src->x, gm.getEntityManager().getPlayer().dest.x - x_right, 0.05f);
-  src->y =
-      lerp(src->y, gm.getEntityManager().getPlayer().dest.y - y_bottom, 0.05f);
+  Entity* player = gm.getEntityManager().getPlayer();
+  if (player) {
+    SDL_FRect playerDest = player->getDestRect();
+    src->x = lerp(src->x, playerDest.x - x_right, 0.05f);
+    src->y = lerp(src->y, playerDest.y - y_bottom, 0.05f);
+  }
 
   if (src->x < 0) {
     src->x = 0;

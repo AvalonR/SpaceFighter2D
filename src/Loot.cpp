@@ -15,13 +15,16 @@ void Loot::spawnCoins(SDL_FRect position, int amount) {
 }
 
 void Loot::UpdateCoins(GameManager &gm) {
+  Entity* player = gm.getEntityManager().getPlayer();
+  if (!player) return;
+
+  SDL_FRect playerDest = player->getDestRect();
+  float playerX = player->getX();
+  float playerY = player->getY();
+
   for (auto &coin : CoinVector) {
-    float diffX = (gm.getEntityManager().getPlayer().x +
-                   gm.getEntityManager().getPlayer().dest.w / 2) -
-                  coin.dst.x;
-    float diffY = (gm.getEntityManager().getPlayer().y +
-                   gm.getEntityManager().getPlayer().dest.h / 2) -
-                  coin.dst.y;
+    float diffX = (playerX + playerDest.w / 2) - coin.dst.x;
+    float diffY = (playerY + playerDest.h / 2) - coin.dst.y;
     float dist = std::sqrt(diffX * diffX + diffY * diffY);
     if (dist > 21.0f && dist < 250.0f) {
       if (dist > 1.0f) {

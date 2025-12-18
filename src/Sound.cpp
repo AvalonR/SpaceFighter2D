@@ -1,5 +1,5 @@
 #include "Sound.h"
-#include "Enemy.h"
+#include "EnemyNew.h"
 #include "SDL3/SDL_audio.h"
 #include "SDL3/SDL_properties.h"
 #include <SDL3_mixer/SDL_mixer.h>

@@ -5,6 +5,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "Entity.h"
 #include "Setup.h"
 #include <string>
 #include <unordered_map>
@@ -26,7 +27,7 @@ struct PlayerUpgradeStats {
   float bulletCooldownMultiplier = 1.0f; // < 1.0 = faster
 };
 
-class Player {
+class Player : public Entity {
 public:
   static std::unordered_map<SDL_Keycode, bool>
       keyState; // Holds the state of keys
@@ -42,14 +43,13 @@ public:
   static bool levelUpSoundPlayed;
   static PlayerUpgradeStats PlayerUpgrades;
   static Achieve Achievements[15];
+
   Player();
-  ~Player();
-  float HP{}, BC{};
-  float x, y;
-  SDL_FRect srcR{}, dstR{};
-  int TextureID{};
-  Vector velocity{};
-  int rotation{}, shooting_delay{};
+
+  void update(GameManager &gm) override;
+  void onDeath(GameManager &gm) override;
+  int getTypeID() const override { return 0; }
+
   static void playerInput(GameManager &gm);
   static void AchievementLogging(GameManager &gm);
 };

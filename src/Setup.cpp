@@ -5,7 +5,8 @@
 #include <ostream>
 
 #include "Bullet.h"
-#include "Enemy.h"
+#include "EnemyNew.h"
+#include "Entity.h"
 #include "Loot.h"
 #include "Map.h"
 #include "Player.h"
@@ -59,154 +60,6 @@ const std::string Setup::basePath = []() {
 
 std::vector<int> Setup::ScoreHistory;
 
-void EntityManager::removeDeadEntities(GameManager &gm) {
-  entities.erase(
-      std::ranges::remove_if(
-          entities,
-          [&gm](EntityStats &Entity) {
-            // Player death
-            if (Entity.HP <= 0 && Entity.type == 0) {
-              Enemy::RestartWaves();
-              gm.setRestart(true);
-              UI::PushState(UIState::RESTART_CONFIRMATION);
-              return false; // Don't remove player yet, restart handles it
-            }
-
-            // Enemy death
-            if (Entity.HP <= 0 && Entity.type != 0) {
-              SDL_FRect explosionRect = {
-                  Entity.dest.x + Entity.velocity.x * gm.getSpeed(),
-                  Entity.dest.y + Entity.velocity.y * gm.getSpeed(),
-                  Entity.dest.w, Entity.dest.h};
-              SDL_FRect coinRect = {
-                  Entity.dest.x + Entity.velocity.x * gm.getSpeed(),
-                  Entity.dest.y + Entity.velocity.y * gm.getSpeed(), 8, 8};
-
-              // Type 1: Basic Enemy
-              if (Entity.type == 1) {
-                explosionRect.h *= 2;
-                explosionRect.w *= 2;
-
-                // Stop engine animation
-                for (auto &animation : TextureManager::animationsVec) {
-                  if (animation.AnimationNumber == 9 &&
-                      animation.EUID == Entity.UID) {
-                    animation.expiration = -1;
-                  }
-                }
-
-                TextureManager::animationsVec.emplace_back(
-                    0, 20, 300, Entity.rotation, 2, explosionRect, Entity.UID);
-                gm.addScore(20);
-                Sound::PlaySound(9);
-                Player::PlayerUpgrades.ExperienceP =
-                    std::min(Player::PlayerUpgrades.ExperienceP + 0.15f, 1.0f);
-                Player::enemies_killed++;
-                Loot::spawnCoins(coinRect, 10);
-              }
-
-              // Type 2: Torpedo Enemy
-              else if (Entity.type == 2 && Entity.HP != -0.9999f) {
-                explosionRect.w *= 1.2;
-                explosionRect.h *= 1.7;
-
-                for (auto &animation : TextureManager::animationsVec) {
-                  if (animation.AnimationNumber == 10 &&
-                      animation.EUID == Entity.UID) {
-                    animation.expiration = -1;
-                  }
-                }
-
-                TextureManager::animationsVec.emplace_back(
-                    0, 20, 300, Entity.rotation, 0, explosionRect, Entity.UID);
-                gm.addScore(25);
-                Sound::PlaySound(9);
-                Player::PlayerUpgrades.ExperienceP =
-                    std::min(Player::PlayerUpgrades.ExperienceP + 0.1f, 1.0f);
-                Player::enemies_killed++;
-                Loot::spawnCoins(coinRect, 15);
-              }
-
-              // Type 2: Torpedo Enemy (special death - no rewards)
-              else if (Entity.type == 2 && Entity.HP == -0.9999f) {
-                explosionRect.w *= 1.2;
-                explosionRect.h *= 1.7;
-
-                for (auto &animation : TextureManager::animationsVec) {
-                  if (animation.AnimationNumber == 10 &&
-                      animation.EUID == Entity.UID) {
-                    animation.expiration = -1;
-                  }
-                }
-
-                TextureManager::animationsVec.emplace_back(
-                    0, 20, 300, Entity.rotation, 0, explosionRect, Entity.UID);
-              }
-
-              // Type 3: Dreadnought
-              else if (Entity.type == 3) {
-                explosionRect.x = Entity.x;
-                explosionRect.y = Entity.y;
-                explosionRect.w = 256;
-                explosionRect.h = 256;
-
-                for (auto &animation : TextureManager::animationsVec) {
-                  if ((animation.AnimationNumber == 4 &&
-                       animation.EUID == Entity.UID) ||
-                      (animation.AnimationNumber == 5 &&
-                       animation.EUID == Entity.UID) ||
-                      (animation.AnimationNumber == 11 &&
-                       animation.EUID == Entity.UID)) {
-                    animation.expiration = -1;
-                  }
-                }
-
-                TextureManager::animationsVec.emplace_back(
-                    0, 20, 300, Entity.rotation, 3, explosionRect, Entity.UID);
-                Sound::PlaySound(9);
-                Player::PlayerUpgrades.ExperienceP =
-                    std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
-                gm.addScore(250);
-                Player::enemies_killed++;
-                Player::bosses_killed++;
-                Loot::spawnCoins(coinRect, 100);
-              }
-
-              // Type 4: Battlecruiser
-              else if (Entity.type == 4) {
-                explosionRect.x = Entity.x;
-                explosionRect.y = Entity.y;
-                explosionRect.w = 256;
-                explosionRect.h = 256;
-
-                for (auto &animation : TextureManager::animationsVec) {
-                  if ((animation.AnimationNumber == 7 &&
-                       animation.EUID == Entity.UID) ||
-                      (animation.AnimationNumber == 12 &&
-                       animation.EUID == Entity.UID)) {
-                    animation.expiration = -1;
-                  }
-                }
-
-                TextureManager::animationsVec.emplace_back(
-                    0, 20, 300, Entity.rotation, 6, explosionRect, Entity.UID);
-                Sound::PlaySound(9);
-                Player::PlayerUpgrades.ExperienceP =
-                    std::min(Player::PlayerUpgrades.ExperienceP + 0.3f, 1.0f);
-                gm.addScore(350);
-                Player::enemies_killed++;
-                Player::bosses_killed++;
-                Loot::spawnCoins(coinRect, 150);
-              }
-
-              return true; // Remove this entity
-            }
-
-            return false; // Keep entity alive
-          })
-          .begin(),
-      entities.end());
-}
 void Setup::initialization(GameManager &gm) {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
@@ -233,24 +86,17 @@ void Setup::initialization(GameManager &gm) {
   Map::MapGeneration();
   gm.setCurrentLevel(1);
   Map::NewMap(gm.getCurrentLevel());
-  Player player;
-  EntityStats stats;
-  stats.HP = player.HP;
-  stats.BC = player.BC;
-  stats.type = 0;
-  stats.x = player.x;
-  stats.y = player.y;
-  stats.TextureID = player.TextureID;
-  stats.src = player.srcR;
-  stats.dest = player.dstR;
-  stats.rotation = player.rotation;
-  stats.velocity = player.velocity;
-  stats.shooting_delay = player.shooting_delay;
-  stats.effectTimer = 0;
-  stats.UID = gm.generateEntityID(0);
-  gm.getEntityManager().add(stats);
+
+  Player *player = new Player();
+  player->setUID(gm.generateEntityID(0));
+  gm.getEntityManager().add(player);
+
   gm.reset();
-  Enemy::SpawnEnemy(3);
+
+  Entity *enemy = Enemy::SpawnEnemy(3);
+  if (enemy) {
+    gm.getEntityManager().add(enemy);
+  }
 }
 
 void Setup::gameLoop(GameManager &gm) {
@@ -260,7 +106,7 @@ void Setup::gameLoop(GameManager &gm) {
   int frames = 0;
   int fps = 0;
 
-  const float REFERENCE_DELTA = 1000.0f / 144.0f; // 6.94ms
+  const float REFERENCE_DELTA = 1000.0f / 144.0f;
 
   while (gm.getloopRunning()) {
     if (!gm.getVsync()) {
@@ -297,7 +143,7 @@ void Setup::gameLoop(GameManager &gm) {
 
 void Setup::restart(GameManager &gm) {
   if (gm.getRestart()) {
-    gm.getEntityList().clear();
+    gm.getEntityManager().clear();
     Bullet::BulletList.clear();
     Bullet::ScheduledBulletList.clear();
     TextureManager::animationsVec.clear();
@@ -305,22 +151,10 @@ void Setup::restart(GameManager &gm) {
     Enemy::enemyRotations.clear();
     Loot::CoinVector.clear();
 
-    Player player;
-    EntityStats stats;
-    stats.HP = player.HP;
-    stats.BC = player.BC;
-    stats.type = 0;
-    stats.x = player.x;
-    stats.y = player.y;
-    stats.TextureID = player.TextureID;
-    stats.src = player.srcR;
-    stats.dest = player.dstR;
-    stats.rotation = player.rotation;
-    stats.velocity = player.velocity;
-    stats.shooting_delay = player.shooting_delay;
-    stats.effectTimer = 0;
-    stats.UID = gm.generateEntityID(0);
-    gm.getEntityManager().add(stats);
+    Player *player = new Player();
+    player->setUID(gm.generateEntityID(0));
+    gm.getEntityManager().add(player);
+
     gm.setRestart(false);
     gm.set_is_Paused(false);
     Sound::StopGameSound();
@@ -382,91 +216,27 @@ void Setup::update(GameManager &gm) {
     Player::AchievementLogging(gm);
     Enemy::SwarmingScenario();
 
-    for (auto &Entity : gm.getEntityList()) {
-      if (Entity.type == 0) {
-        Entity.x += Entity.velocity.x * gm.getSpeed() * gm.getDelta() *
-                    (Player::PlayerUpgrades.MovementSpeed);
-        Entity.y += Entity.velocity.y * gm.getSpeed() * gm.getDelta() *
-                    (Player::PlayerUpgrades.MovementSpeed);
+    Entity *player = gm.getEntityManager().getPlayer();
+    for (Entity *entity : gm.getEntityManager().getEntities()) {
+      if (!entity)
+        continue;
 
-        Entity.x = std::clamp(Entity.x, 0.0f, gm.getWindowW() - Entity.dest.w);
-        Entity.y = std::clamp(Entity.y, 0.0f, gm.getWindowH() - Entity.dest.h);
+      entity->update(gm);
 
-        Entity.dest.x = Entity.x;
-        Entity.dest.y = Entity.y;
-      } else {
-        Entity.x += Entity.velocity.x * gm.getSpeed() * gm.getDelta();
-        Entity.y += Entity.velocity.y * gm.getSpeed() * gm.getDelta();
-        Entity.dest.x = Entity.x;
-        Entity.dest.y = Entity.y;
-      }
-
-      if (Entity.effectTimer > 0) {
-        Entity.effectTimer -= gm.getDelta();
-      }
-
-      if (Entity.velocity.x != 0.0f || Entity.velocity.y != 0.0f) {
-        bool found = false;
-
-        SDL_FRect a = Entity.dest;
-        float centerX = a.x + a.w / 2.0f;
-        float centerY = a.y + a.h / 2.0f;
-
-        if (Entity.type == 0) {
-          a.h = a.h * 1.6;
-          a.w = a.w * 1.6;
-        }
-        if (Entity.type == 1) {
-          a.h = a.h * 2.0;
-          a.w = a.w * 2.0;
-        }
-        if (Entity.type == 2) {
-          a.w = a.w * 1.1;
-          a.h = a.h * 1.8;
-        }
-        if (Entity.type == 3) {
-          a.h = a.h * 1.5;
-          a.w = a.w * 1.9;
-        }
-        if (Entity.type == 4) {
-          a.h = a.h * 1.9;
-          a.w = a.w * 2.1;
-        }
-
-        a.x = centerX - a.w / 2.0f;
-        a.y = centerY - a.h / 2.0f;
-
-        for (auto &animation : TextureManager::animationsVec) {
-          if (animation.AnimationNumber == 8 + Entity.type &&
-              animation.EUID == Entity.UID) {
-            animation.destRect = a;
-            animation.angle = Entity.rotation;
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          TextureManager::animationsVec.emplace_back(
-              0, 10, 300, Entity.rotation, 8 + Entity.type, a, Entity.UID);
-        }
-      } else {
-        TextureManager::animationsVec.erase(
-            std::remove_if(TextureManager::animationsVec.begin(),
-                           TextureManager::animationsVec.end(),
-                           [&](const AnimationVector &anim) {
-                             return anim.AnimationNumber == 8 + Entity.type &&
-                                    anim.EUID == Entity.UID;
-                           }),
-            TextureManager::animationsVec.end());
+      if (entity->getTypeID() != 0 && player) {
+        Enemy *enemy = static_cast<Enemy *>(entity);
+        enemy->updateAI(gm, *player, gm.getDelta());
       }
     }
 
     Loot::UpdateCoins(gm);
     Loot::UpdateParticles(gm);
     TextureManager::AnimationCleaning();
-    Enemy::EnemyAI(gm);
+
     Bullet::updateBullets(gm);
+
+    gm.getEntityManager().removeDeadEntities(gm);
+
     Map::MapUpdate(gm);
     TextManager::ClearTextureCache();
   }
@@ -482,20 +252,24 @@ void Setup::render(GameManager &gm) {
     }
   }
 
-  for (auto &Entity : gm.getEntityList()) {
-    if (Entity.TextureID >= 0 &&
-        Entity.TextureID < TextureManager::TextureVec.size()) {
-      if (Entity.effectTimer > 0) {
-        SDL_SetTextureColorMod(TextureManager::TextureVec[Entity.TextureID],
-                               255, 100, 100);
+  for (Entity *entity : gm.getEntityManager().getEntities()) {
+    if (!entity)
+      continue;
+
+    int textureID = entity->getTextureID();
+    if (textureID >= 0 && textureID < TextureManager::TextureVec.size()) {
+      if (entity->getEffectTimer() > 0) {
+        SDL_SetTextureColorMod(TextureManager::TextureVec[textureID], 255, 100,
+                               100);
       } else {
-        SDL_SetTextureColorMod(TextureManager::TextureVec[Entity.TextureID],
-                               255, 255, 255);
+        SDL_SetTextureColorMod(TextureManager::TextureVec[textureID], 255, 255,
+                               255);
       }
-      TextureManager::DrawTextureNP(Entity.TextureID, gm.getRenderer(),
-                                    &Entity.dest, Entity.rotation);
+      SDL_FRect dest = entity->getDestRect();
+      TextureManager::DrawTextureNP(textureID, gm.getRenderer(), &dest,
+                                    entity->getRotation());
     } else {
-      std::cerr << "Invalid TextureID: " << Entity.TextureID << std::endl;
+      std::cerr << "Invalid TextureID: " << textureID << std::endl;
     }
   }
 
@@ -509,12 +283,15 @@ void Setup::render(GameManager &gm) {
       continue;
     }
     bool colorMod = false;
-    for (auto &Entity : gm.getEntityList()) {
-      if ((animation.AnimationNumber == 5 && Entity.type == 3 &&
-           Entity.effectTimer > 0) ||
-          (animation.AnimationNumber == 7 && Entity.type == 4 &&
-           Entity.effectTimer > 0)) {
-        if (Entity.UID == animation.EUID) {
+    for (Entity *entity : gm.getEntityManager().getEntities()) {
+      if (!entity)
+        continue;
+      int entityType = entity->getTypeID();
+      if ((animation.AnimationNumber == 5 && entityType == 3 &&
+           entity->getEffectTimer() > 0) ||
+          (animation.AnimationNumber == 7 && entityType == 4 &&
+           entity->getEffectTimer() > 0)) {
+        if (entity->getUID() == animation.EUID) {
           colorMod = true;
         }
       }

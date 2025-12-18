@@ -1,7 +1,3 @@
-//
-// Created by romak on 18.01.2025.
-//
-
 #include "UI.h"
 
 #include <cmath>
@@ -9,7 +5,7 @@
 #include <iostream>
 #include <map>
 
-#include "Enemy.h"
+#include "EnemyNew.h"
 #include "Player.h"
 #include "Setup.h"
 #include "Sound.h"
@@ -26,7 +22,6 @@ bool UI::ControlsPressed[7];
 int LevelPopUp = -1;
 
 std::multimap<UIState, std::string> ButtonLayoutS = {
-    // MAIN_MENU
     {UIState::MAIN_MENU, "Swarm Mode"},
     {UIState::MAIN_MENU, "Restart Swarm Mode"},
     {UIState::MAIN_MENU, "Score Board"},
@@ -34,7 +29,6 @@ std::multimap<UIState, std::string> ButtonLayoutS = {
     {UIState::MAIN_MENU, "Quit"},
     {UIState::MAIN_MENU, "Settings"},
 
-    // PAUSE_MENU
     {UIState::SETTINGS_MENU, "Video"},
     {UIState::SETTINGS_MENU, "Audio"},
     {UIState::SETTINGS_MENU, "Misc"},
@@ -46,7 +40,6 @@ std::multimap<UIState, std::string> ButtonLayoutS = {
     {UIState::SETTINGS_MENU, "1920x1080"},
     {UIState::SETTINGS_MENU, "1280x720"},
 
-    // Various game states
     {UIState::RESTART_CONFIRMATION, "Restart"},
     {UIState::RESTART_CONFIRMATION, "Main Menu"},
     {UIState::DIFFICULTY_SELECTION, "Novice (1x)"},
@@ -67,7 +60,6 @@ std::multimap<UIState, std::string> ButtonLayoutS = {
     {UIState::LEVEL_UP_MENU, "Efficient Repair"},
     {UIState::LEVEL_UP_MENU, "Thruster"},
 
-    // Back buttons
     {UIState::SCORE_BOARD, "Back"},
     {UIState::ACHIEVEMENTS, "Back"}};
 
@@ -131,8 +123,6 @@ void UI::RenderUI(GameManager &gm) {
   SDL_SetRenderDrawColor(gm.getRenderer(), 0, 0, 0, 0);
   SDL_RenderClear(gm.getRenderer());
   UpdateCurrentLayerS();
-  // std::cout << "Current state: " << ToString(UI::GetCurrentState()) <<
-  // std::endl;
   if (!ContainsSwarmPlaying()) {
     SDL_RenderTexture(gm.getRenderer(), MainMenuBackground, nullptr, nullptr);
     if (Button({855, 500, 180, 35}, {138, 43, 226, 180}, "Swarm Mode",
@@ -272,13 +262,17 @@ void UI::RenderUI(GameManager &gm) {
 }
 
 void UI::PlayerStats(GameManager &gm) {
+  Entity *player = gm.getEntityManager().getPlayer();
+  if (!player)
+    return;
+
   if (Player::PlayerUpgrades.TotalHP > 1.0f) {
     int numberOfSectors =
         std::max(1, static_cast<int>(ceil(Player::PlayerUpgrades.TotalHP)));
     int sizeOfSectors = 200 / numberOfSectors;
 
-    float hp = std::clamp(gm.getEntityManager().getPlayer().HP, 0.0f,
-                          static_cast<float>(numberOfSectors));
+    float hp =
+        std::clamp(player->getHP(), 0.0f, static_cast<float>(numberOfSectors));
 
     SDL_FRect HPbar = {1700, 1040, 200, 20};
     SDL_FRect InnerHPBar = {1700, 1040, 200 * (hp / numberOfSectors), 20};
@@ -295,8 +289,7 @@ void UI::PlayerStats(GameManager &gm) {
     }
   } else {
     SDL_FRect HPbar = {1700, 1040, 200, 20};
-    SDL_FRect InnerHPBar = {1700, 1040,
-                            200 * gm.getEntityManager().getPlayer().HP, 20};
+    SDL_FRect InnerHPBar = {1700, 1040, 200 * player->getHP(), 20};
     SDL_SetRenderDrawColor(gm.getRenderer(), 70, 70, 70, 235);
     SDL_RenderFillRect(gm.getRenderer(), &HPbar);
     SDL_SetRenderDrawColor(gm.getRenderer(), 255, 0, 0, 255);
@@ -308,7 +301,7 @@ void UI::PlayerStats(GameManager &gm) {
         1, static_cast<int>(ceil(Player::PlayerUpgrades.TotalBulletCap)));
     int sizeOfBulletSectors = 200 / numberOfBulletSectors;
 
-    float bc = std::clamp(gm.getEntityManager().getPlayer().BC, 0.0f,
+    float bc = std::clamp(player->getBC(), 0.0f,
                           static_cast<float>(numberOfBulletSectors));
 
     SDL_FRect BulletCap = {220, 1040, -200, 20};
@@ -327,8 +320,7 @@ void UI::PlayerStats(GameManager &gm) {
     }
   } else {
     SDL_FRect BulletCap = {220, 1040, -200, 20};
-    SDL_FRect InnerBulletCap = {
-        220, 1040, -200 * gm.getEntityManager().getPlayer().BC, 20};
+    SDL_FRect InnerBulletCap = {220, 1040, -200 * player->getBC(), 20};
 
     SDL_SetRenderDrawColor(gm.getRenderer(), 70, 70, 70, 235);
     SDL_RenderFillRect(gm.getRenderer(), &BulletCap);
@@ -557,11 +549,13 @@ void UI::Store(GameManager &gm) {
   } else {
     if (Button({550, 350, 180, 165}, {255, 255, 255, 100}, "Heal +20 Health",
                {555, 470}, 16)) {
-      gm.spendCoins(80);
-      gm.getEntityManager().getPlayer().HP =
-          std::min(gm.getEntityManager().getPlayer().HP + 0.2f,
-                   Player::PlayerUpgrades.TotalHP);
-      Sound::PlaySound(6);
+      Entity *player = gm.getEntityManager().getPlayer();
+      if (player) {
+        gm.spendCoins(80);
+        player->setHP(
+            std::min(player->getHP() + 0.2f, Player::PlayerUpgrades.TotalHP));
+        Sound::PlaySound(6);
+      }
     }
     TextureManager::DrawTextureNP(9, gm.getRenderer(), &BCIcon, 0);
   }
@@ -575,12 +569,14 @@ void UI::Store(GameManager &gm) {
   } else {
     if (Button({760, 350, 180, 165}, {255, 255, 255, 100}, "Increase Max",
                {765, 470}, 16)) {
-      gm.spendCoins(100);
-      Player::PlayerUpgrades.TotalHP += 0.2f;
-      gm.getEntityManager().getPlayer().HP =
-          std::min(gm.getEntityManager().getPlayer().HP + 0.2f,
-                   Player::PlayerUpgrades.TotalHP);
-      Sound::PlaySound(6);
+      Entity *player = gm.getEntityManager().getPlayer();
+      if (player) {
+        gm.spendCoins(100);
+        Player::PlayerUpgrades.TotalHP += 0.2f;
+        player->setHP(
+            std::min(player->getHP() + 0.2f, Player::PlayerUpgrades.TotalHP));
+        Sound::PlaySound(6);
+      }
     }
     TextManager::RenderText("Health +20", {765, 490}, {255, 255, 255, 255}, 16);
     TextureManager::DrawTextureNP(15, gm.getRenderer(), &BCIcon, 0);
@@ -595,12 +591,14 @@ void UI::Store(GameManager &gm) {
   } else {
     if (Button({970, 350, 180, 165}, {255, 255, 255, 100}, "Boost Max",
                {975, 470}, 16)) {
-      gm.spendCoins(80);
-      Player::PlayerUpgrades.TotalBulletCap += 0.2f;
-      gm.getEntityManager().getPlayer().BC =
-          std::min(gm.getEntityManager().getPlayer().BC + 0.2f,
-                   Player::PlayerUpgrades.TotalBulletCap);
-      Sound::PlaySound(6);
+      Entity *player = gm.getEntityManager().getPlayer();
+      if (player) {
+        gm.spendCoins(80);
+        Player::PlayerUpgrades.TotalBulletCap += 0.2f;
+        player->setBC(std::min(player->getBC() + 0.2f,
+                               Player::PlayerUpgrades.TotalBulletCap));
+        Sound::PlaySound(6);
+      }
     }
     TextManager::RenderText("Ammo +20", {975, 490}, {255, 255, 255, 255}, 16);
     TextureManager::DrawTextureNP(19, gm.getRenderer(), &BCIcon, 0);
@@ -797,7 +795,7 @@ void UI::Escape(GameManager &gm) {
   }
   if (video_settings) {
     SDL_SetRenderDrawColor(gm.getRenderer(), 0, 0, 0, 255);
-    SDL_FRect fillRect = {500, 300, 900, 500}; // clears the settings area
+    SDL_FRect fillRect = {500, 300, 900, 500};
     SDL_RenderFillRect(gm.getRenderer(), &fillRect);
 
     SDL_SetRenderDrawColor(gm.getRenderer(), 255, 255, 255, 255);
@@ -998,8 +996,6 @@ int UI::Dropdown(int choice_count, int current_choice,
                  SDL_FRect DropdownDimensions,
                  std::vector<const char *> DropdownOptions) {
   static bool opendropd;
-  // ButtonLayout.insert(std::pair<int, const char*>(3,
-  // DropdownOptions[current_choice]));
   SDL_FRect ButtonDim = DropdownDimensions;
   bool insideopendropd;
   if (!opendropd) {

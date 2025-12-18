@@ -1,7 +1,3 @@
-//
-// Created by romak on 16.01.2025.
-//
-
 #ifndef SETUP_H
 #define SETUP_H
 
@@ -17,9 +13,7 @@
 #include <unordered_set>
 #include <vector>
 
-struct Vector {
-  float x, y;
-};
+#include "Entity.h"
 
 struct EntityStats {
   float HP, BC, type;
@@ -32,7 +26,6 @@ struct EntityStats {
   uint32_t UID;
 };
 
-// FOrward Declaration
 class GameManager;
 
 class CoinSystem {
@@ -149,14 +142,17 @@ public:
   int pendingChange() const { return target - current; }
 };
 
+class Entity;
+
 class EntityManager {
 private:
-  std::vector<EntityStats> entities;
+  std::vector<Entity *> entities;
   std::mt19937 rng;
   std::unordered_set<uint32_t> usedIDs;
 
 public:
   EntityManager() : rng(std::random_device{}()) {}
+  ~EntityManager();
 
   uint32_t generateID(int TypeID) {
     if (TypeID < 0 || TypeID > 15) {
@@ -174,18 +170,16 @@ public:
     return id;
   }
 
-  void add(const EntityStats &entity) { entities.emplace_back(entity); }
+  void add(Entity *entity) { entities.push_back(entity); }
+  void clear();
 
-  void clear() {
-    entities.clear();
-    usedIDs.clear();
-  }
-
-  std::vector<EntityStats> &getEntities() { return entities; }
-  EntityStats &getPlayer() { return entities[0]; }
-  const std::vector<EntityStats> &getEntities() const { return entities; }
+  std::vector<Entity *> &getEntities() { return entities; }
+  Entity *getPlayer() { return entities.empty() ? nullptr : entities[0]; }
+  const std::vector<Entity *> &getEntities() const { return entities; }
 
   void removeDeadEntities(GameManager &gm);
+
+  std::vector<EntityStats> getLegacyEntities();
 };
 
 class LevelManager {
@@ -212,11 +206,8 @@ public:
   void reset() { currentLevel = 1; }
 };
 
-// ============= END NEW MANAGERS =============
-
 class GameManager {
 private:
-  // NEW: Internal systems
   CoinSystem coinSystem;
   ScoreSystem scoreSystem;
   EntityManager entityManager;
@@ -245,7 +236,6 @@ public:
   void reset() {
     coinSystem.reset();
     scoreSystem.reset();
-    // entityManager.clear();
     levelManager.reset();
   }
 
@@ -254,7 +244,6 @@ public:
     SDL_DestroyWindow(window);
   }
 
-  // ========== COIN SYSTEM WRAPPERS ==========
   void addCoins(int amount) { coinSystem.add(amount); }
   bool spendCoins(int cost) { return coinSystem.spend(cost); }
   void resetAllCoins() { coinSystem.reset(); }
@@ -264,7 +253,6 @@ public:
   bool isAnimatingCoins() const { return coinSystem.isAnimating(); }
   int pendingCoinChange() const { return coinSystem.pendingChange(); }
 
-  // Deprecated struct - keep for compatibility but discourage use
   struct CoinInfo {
     int current;
     int target;
@@ -274,7 +262,6 @@ public:
     return {coinSystem.getCurrent(), coinSystem.getTarget()};
   }
 
-  // ========== SCORE SYSTEM WRAPPERS ==========
   void addScore(int points) { scoreSystem.add(points); }
   int getScore() { return scoreSystem.getCurrent(); }
   int getTargetScore() { return scoreSystem.getTarget(); }
@@ -286,7 +273,6 @@ public:
   bool isAnimatingScore() const { return scoreSystem.isAnimating(); }
   int pendingScoreChange() const { return scoreSystem.pendingChange(); }
 
-  // Deprecated struct
   struct ScoreInfo {
     int current;
     int target;
@@ -297,26 +283,22 @@ public:
             scoreSystem.getDifficulty()};
   }
 
-  // ========== ENTITY MANAGER WRAPPERS ==========
-  std::vector<EntityStats> &getEntityList() {
-    return entityManager.getEntities();
+  std::vector<EntityStats> getEntityList() {
+    return entityManager.getLegacyEntities();
   }
   uint32_t generateEntityID(int typeID) {
     return entityManager.generateID(typeID);
   }
 
-  // ========== LEVEL MANAGER WRAPPERS ==========
   int getCurrentLevel() { return levelManager.getLevel(); }
   void setCurrentLevel(int newLevel) { levelManager.setLevel(newLevel); }
   void ppCurrentLevel() { levelManager.nextLevel(); }
 
-  // ========== DIRECT SYSTEM ACCESS (NEW API) ==========
   CoinSystem &getCoinsSystem() { return coinSystem; }
   ScoreSystem &getScoreSystem() { return scoreSystem; }
   EntityManager &getEntityManager() { return entityManager; }
   LevelManager &getLevelManager() { return levelManager; }
 
-  // ========== INFRASTRUCTURE ==========
   int getWindowH() { return WindowHeight; }
   int getWindowW() { return WindowWidth; }
   SDL_Window *getWindow() { return window; }
